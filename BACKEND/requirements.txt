@@ -4,3 +4,6 @@ uvicorn[standard]
 sqlalchemy
 pymysql
 python-dotenv
+bcrypt
+python-jose
+python-multipart
