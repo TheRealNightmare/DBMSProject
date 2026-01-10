@@ -1,71 +1,66 @@
 <template>
-  <div class="min-h-screen bg-verso-cream">
+  <div class="min-h-screen bg-verso-cream pb-20 md:pb-0">
     <Navbar />
 
-    <main class="max-w-4xl mx-auto px-4 sm:px-6 py-12 pb-24">
-      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div class="h-48 bg-verso-blue w-full"></div>
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+      <div
+        class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100"
+      >
+        <div class="h-32 bg-verso-blue w-full"></div>
 
-        <div class="px-8 pb-8">
-          <div class="relative flex justify-between items-end -mt-16 mb-8">
-            <div class="flex items-end">
+        <div class="px-6 pb-8">
+          <div class="relative flex justify-center -mt-16 mb-6">
+            <div class="relative flex flex-col items-center">
               <div class="relative">
                 <img
                   src="https://placehold.co/150x150"
-                  class="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-gray-200"
+                  class="w-32 h-32 rounded-full border-4 border-white shadow-md bg-gray-200 object-cover"
                 />
-                <button
-                  class="absolute bottom-1 right-1 bg-gray-800 text-white p-2 rounded-full shadow-md hover:bg-gray-700 transition"
+              </div>
+              <button
+                class="text-verso-blue text-sm font-bold mt-2 hover:underline"
+              >
+                Change Photo
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-4 max-w-lg mx-auto">
+            <BaseInput label="Email" modelValue="spoider.man@example.com" />
+            <BaseInput
+              label="Password"
+              type="password"
+              modelValue="000000000"
+            />
+            <BaseInput label="Fullname" modelValue="Peter Parker" />
+
+            <div class="grid grid-cols-2 gap-4">
+              <BaseInput label="date of birth" modelValue="01/01/1900" />
+              <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1 ml-1"
+                  >Gender</label
                 >
-                  📷
-                </button>
-              </div>
-              <div class="ml-6 mb-2">
-                <h1 class="text-3xl font-bold text-verso-dark">Peter Parker</h1>
-                <p class="text-gray-500">Member since 2025</p>
+                <select
+                  class="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 outline-none focus:ring-2 focus:ring-verso-blue/20 focus:border-verso-blue transition"
+                >
+                  <option>Male</option>
+                  <option>Female</option>
+                </select>
               </div>
             </div>
-          </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <BaseInput
-              label="Email"
-              modelValue="spoider.man@example.com"
-              disabled
-              class="bg-gray-50 text-gray-500"
-            />
-            <BaseInputZV label="Full Name" modelValue="Peter Parker" />
-            <BaseInput
-              label="Date of Birth"
-              modelValue="1900-01-01"
-              type="date"
-            />
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
-                >Gender</label
+            <div class="pt-6 flex flex-col gap-3">
+              <button
+                class="w-full bg-verso-blue text-white py-3 rounded-xl font-bold shadow-lg shadow-verso-blue/30 hover:opacity-90 transition"
               >
-              <select
-                class="w-full rounded-xl border border-gray-300 shadow-sm p-3 bg-white focus:ring-2 focus:ring-verso-blue outline-none"
+                Confirm
+              </button>
+              <button
+                class="w-full text-red-500 py-3 rounded-xl font-bold hover:bg-red-50 transition"
               >
-                <option selected>Male</option>
-                <option>Female</option>
-                <option>Other</option>
-              </select>
+                log out
+              </button>
             </div>
-          </div>
-
-          <div class="mt-8 flex gap-4 border-t pt-8">
-            <button
-              class="flex-1 bg-verso-blue text-white py-3 rounded-xl font-bold shadow-md hover:bg-opacity-90 transition"
-            >
-              Confirm Changes
-            </button>
-            <button
-              class="flex-1 border-2 border-red-100 text-red-500 py-3 rounded-xl font-bold hover:bg-red-50 transition"
-            >
-              Log Out
-            </button>
           </div>
         </div>
       </div>
@@ -81,6 +76,4 @@
 import Navbar from "@/components/layout/Navbar.vue";
 import BottomNav from "@/components/layout/BottomNav.vue";
 import BaseInput from "@/components/ui/BaseInput.vue";
-// Temporary fix for BaseInputZV typo in template if BaseInput is what we have
-const BaseInputZV = BaseInput;
 </script>
