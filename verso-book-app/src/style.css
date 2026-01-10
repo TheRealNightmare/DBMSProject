@@ -1,3 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Define your custom colors here using CSS variables */
+  /* The format is --color-{name}: {value} */
+
+  --color-verso-cream: #fdf6e9;
+  --color-verso-blue: #4a6fa5;
+  --color-verso-dark: #2d3748;
+}
