@@ -1,9 +1,0 @@
-fastapi>=0.115.6
-pydantic>=2.10.3
-uvicorn[standard]
-sqlalchemy
-pymysql
-python-dotenv
-bcrypt
-python-jose
-python-multipart
