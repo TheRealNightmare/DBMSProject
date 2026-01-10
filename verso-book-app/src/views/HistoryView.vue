@@ -1,91 +1,100 @@
 <template>
-  <div class="min-h-screen bg-verso-cream pb-20 md:pb-0">
-    <Navbar />
+  <div class="min-h-screen bg-verso-cream font-sans flex flex-col">
+    <Sidebar />
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div
-        class="flex border-b border-gray-200 mb-6 overflow-x-auto no-scrollbar"
-      >
-        <button
-          v-for="tab in ['HISTORY', 'STORAGE', 'FAVORITE']"
-          :key="tab"
-          @click="activeTab = tab"
-          class="pb-3 px-6 text-sm font-bold transition relative outline-none whitespace-nowrap"
-          :class="
-            activeTab === tab
-              ? 'text-verso-blue'
-              : 'text-gray-400 hover:text-gray-600'
-          "
-        >
-          {{ tab }}
-          <span
-            v-if="activeTab === tab"
-            class="absolute bottom-0 left-0 w-full h-0.5 bg-verso-blue"
-          ></span>
-        </button>
-      </div>
+    <div
+      class="md:ml-20 flex flex-col min-h-screen transition-all duration-300 relative"
+    >
+      <Navbar />
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div
-          v-for="book in filteredBooks"
-          :key="book.id"
-          class="bg-white p-3 rounded-xl shadow-sm flex gap-4 relative group hover:shadow-md transition border border-gray-100"
+      <main class="flex-1 max-w-7xl mx-auto w-full px-12 py-8">
+        <h1
+          class="text-lg font-bold text-verso-dark uppercase mb-8 tracking-wide"
         >
-          <button
-            class="absolute top-2 right-2 text-gray-300 hover:text-red-500 font-bold p-1"
+          HISTORY
+        </h1>
+
+        <div class="space-y-10">
+          <div
+            v-for="book in historyBooks"
+            :key="book.id"
+            class="flex flex-col md:flex-row gap-8 items-start relative group"
           >
-            ✕
-          </button>
-
-          <img
-            :src="book.image"
-            class="w-24 h-36 object-cover rounded-md bg-gray-200 shrink-0"
-          />
-
-          <div class="flex-1 flex flex-col min-w-0">
-            <h3
-              class="font-bold text-verso-dark text-base leading-tight mb-1 line-clamp-2"
-            >
-              {{ book.title }}
-            </h3>
-
             <div
-              class="text-xs text-gray-500 grid grid-cols-2 gap-y-1 gap-x-2 mt-1 mb-2"
+              class="w-32 md:w-40 flex-shrink-0 shadow-lg rounded-md overflow-hidden"
             >
-              <div>
-                Author <br /><span class="text-verso-dark font-medium">{{
-                  book.author
-                }}</span>
-              </div>
-              <div>
-                Genre <br /><span class="text-verso-dark font-medium"
-                  >Romance</span
-                >
-              </div>
-              <div>
-                Producer <br /><span class="text-verso-dark font-medium"
-                  >Updating</span
-                >
-              </div>
-              <div>
-                Status <br /><span class="text-verso-dark font-medium"
-                  >25/50</span
-                >
-              </div>
+              <img
+                :src="book.image"
+                :alt="book.title"
+                class="w-full h-auto object-cover aspect-[2/3]"
+              />
             </div>
 
-            <div
-              class="mt-auto flex items-center justify-between border-t border-dashed border-gray-200 pt-2"
-            >
-              <div class="flex text-yellow-400 text-xs">★★★★☆</div>
-              <button class="text-sm text-verso-blue font-bold uppercase">
+            <div class="flex-1 min-w-0 pt-1">
+              <h2
+                class="text-xl font-extrabold text-verso-dark uppercase mb-1 tracking-tight"
+              >
+                {{ book.title }}
+              </h2>
+
+              <div class="flex items-center gap-2 mb-6">
+                <span class="font-bold text-verso-dark text-lg">4</span>
+                <div class="flex items-center gap-1 text-yellow-400">
+                  <Star v-for="i in 4" :key="i" class="w-4 h-4 fill-current" />
+                  <Star class="w-4 h-4 text-gray-400" />
+                </div>
+                <span class="text-verso-dark font-bold text-sm italic ml-1"
+                  >• 1 Review</span
+                >
+              </div>
+
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6 max-w-3xl">
+                <div>
+                  <p class="text-xs text-gray-500 mb-1">Author</p>
+                  <p class="text-verso-dark font-bold text-sm italic">Lorem</p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500 mb-1">Genre</p>
+                  <p class="text-verso-dark font-bold text-sm italic">
+                    Romance
+                  </p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500 mb-1">Producer</p>
+                  <p class="text-verso-dark font-bold text-sm italic">
+                    Updating
+                  </p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500 mb-1">Release status</p>
+                  <p class="text-verso-dark font-bold text-sm italic">25/50</p>
+                </div>
+              </div>
+
+              <button
+                @click="startReading(book.id)"
+                class="bg-verso-blue text-white px-10 py-2 rounded-md font-medium text-sm hover:opacity-90 transition shadow-sm mb-6"
+              >
                 Read
               </button>
+
+              <p class="text-sm font-bold text-verso-dark italic">
+                {{ book.statusLabel }}:
+                <span class="text-gray-600">{{ book.date }}</span>
+              </p>
             </div>
+
+            <button
+              class="absolute top-0 right-0 md:relative md:top-auto md:right-auto text-verso-dark hover:text-red-500 transition p-2"
+            >
+              <X class="w-8 h-8" />
+            </button>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+
+      <Footer />
+    </div>
 
     <div class="md:hidden">
       <BottomNav active="history" />
@@ -94,45 +103,43 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import Sidebar from "@/components/layout/Sidebar.vue";
 import Navbar from "@/components/layout/Navbar.vue";
+import Footer from "@/components/layout/Footer.vue";
 import BottomNav from "@/components/layout/BottomNav.vue";
+import { Star, X } from "lucide-vue-next";
 
-const activeTab = ref("HISTORY");
+const router = useRouter();
 
-// Mock Data matching the PDF listing
-const books = ref([
+// Function to handle navigation to the Reader view
+const startReading = (id) => {
+  router.push(`/read/${id}`);
+};
+
+// Mock Data matching the image exactly
+const historyBooks = ref([
   {
     id: 1,
-    title: "Danh Nhan Vat Ly",
-    author: "Nguyen Truong",
-    image: "https://placehold.co/150x220",
-    category: "HISTORY",
+    title: "DANH NHAN VAT LY",
+    image: "https://covers.openlibrary.org/b/id/8259443-L.jpg", // Einstein/Physics cover placeholder
+    statusLabel: "Read",
+    date: "8/16/13 06:13 PM",
   },
   {
     id: 2,
-    title: "Danh Nhan Van Hoc Nghe Thuat",
-    author: "Nguyen Truong",
-    image: "https://placehold.co/150x220",
-    category: "STORAGE",
+    title: "DANH NHAN VAN HOC NGHE THUAT",
+    image: "https://covers.openlibrary.org/b/id/12556509-L.jpg", // Literature cover placeholder
+    statusLabel: "Save",
+    date: "8/16/13 06:13 PM",
   },
   {
     id: 3,
-    title: "The Sun Also Rises",
-    author: "Ernest Hemingway",
-    image: "https://placehold.co/150x220",
-    category: "FAVORITE",
-  },
-  {
-    id: 4,
-    title: "Danh Nhan Vat Ly",
-    author: "Lorem Ipsum",
-    image: "https://placehold.co/150x220",
-    category: "STORAGE",
+    title: "DANH NHAN VAT LY", // Matches text in image even though cover is Hemingway
+    image: "https://covers.openlibrary.org/b/id/10603788-L.jpg", // The Sun Also Rises cover
+    statusLabel: "Favourite",
+    date: "8/16/13 06:13 PM",
   },
 ]);
-
-const filteredBooks = computed(() => {
-  return books.value.filter((b) => b.category === activeTab.value);
-});
 </script>

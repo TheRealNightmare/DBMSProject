@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import LoginView from "../views/auth/LoginView.vue";
-import RegisterView from "../views/auth/RegisterView.vue"; // Ensure this file exists
+import RegisterView from "../views/auth/RegisterView.vue";
 import HomeView from "../views/HomeView.vue";
 import ProfileView from "../views/ProfileView.vue";
 import HistoryView from "../views/HistoryView.vue";
@@ -8,9 +8,10 @@ import ForgotPassword from "../views/auth/ForgotPassword.vue";
 import VerifyCode from "../views/auth/VerifyCode.vue";
 import ResetPassword from "../views/auth/ResetPassword.vue";
 
-// Lazy load these to avoid circular dependency issues if files are missing
+// Lazy load views
 const BookDetailView = () => import("../views/BookDetailView.vue");
 const ReaderView = () => import("../views/ReaderView.vue");
+const StorageView = () => import("../views/StorageView.vue");
 
 const routes = [
   // Auth Pages
@@ -22,10 +23,11 @@ const routes = [
 
   // App Pages (Protected)
   { path: "/", component: HomeView },
-  { path: "/book/:id", component: BookDetailView },
+  { path: "/book/:id", component: BookDetailView }, // <--- This route handles the click
   { path: "/read/:id", component: ReaderView },
   { path: "/profile", component: ProfileView },
   { path: "/history", component: HistoryView },
+  { path: "/storage", component: StorageView },
 ];
 
 const router = createRouter({
