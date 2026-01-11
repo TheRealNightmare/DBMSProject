@@ -92,10 +92,8 @@
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
-
+    <Footer class="relative z-50" />
     <div class="md:hidden">
       <BottomNav active="history" />
     </div>

@@ -7,6 +7,8 @@ import HistoryView from "../views/HistoryView.vue";
 import ForgotPassword from "../views/auth/ForgotPassword.vue";
 import VerifyCode from "../views/auth/VerifyCode.vue";
 import ResetPassword from "../views/auth/ResetPassword.vue";
+const CommunityView = () => import("../views/CommunityView.vue");
+const ViewAllBooks = () => import("../views/ViewAllBooks.vue");
 
 // Lazy load views
 const BookDetailView = () => import("../views/BookDetailView.vue");
@@ -28,6 +30,8 @@ const routes = [
   { path: "/profile", component: ProfileView },
   { path: "/history", component: HistoryView },
   { path: "/storage", component: StorageView },
+  { path: "/community", component: CommunityView },
+  { path: "/category/:category", component: ViewAllBooks },
 ];
 
 const router = createRouter({

@@ -1,30 +1,98 @@
 <template>
   <div
-    class="min-h-screen bg-verso-cream flex flex-col items-center justify-center p-6"
+    class="min-h-screen bg-verso-cream flex items-center justify-center p-6 relative overflow-hidden"
   >
     <div
-      class="w-full max-w-sm bg-white p-8 rounded-2xl shadow-lg md:shadow-none md:bg-transparent"
-    >
-      <h1 class="text-3xl font-bold text-verso-dark mb-1 text-center">
-        Registration
-      </h1>
-      <p class="text-center text-verso-blue font-medium mb-8">Be a worm</p>
+      class="hidden md:block absolute top-0 left-0 w-64 h-64 bg-verso-blue opacity-5 rounded-full -translate-x-1/2 -translate-y-1/2"
+    ></div>
+    <div
+      class="hidden md:block absolute bottom-0 right-0 w-96 h-96 bg-verso-blue opacity-5 rounded-full translate-x-1/3 translate-y-1/3"
+    ></div>
 
-      <form class="space-y-4">
-        <BaseInput label="Username" />
-        <BaseInput label="Email" />
-        <BaseInput label="Password" type="password" />
-        <BaseInput label="Confirm Password" type="password" />
+    <div
+      class="w-full max-w-md bg-white md:p-10 p-8 rounded-2xl shadow-xl z-10"
+    >
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-verso-dark mb-2">
+          Create an Account
+        </h1>
+        <p class="text-verso-blue font-medium">Be a worm</p>
+      </div>
+
+      <div class="mb-6">
+        <button
+          class="w-full flex justify-center items-center gap-2 border border-gray-300 py-3 rounded-xl hover:bg-gray-50 transition font-medium text-gray-700"
+        >
+          <span class="font-bold text-lg">G</span> Sign up using Google
+        </button>
+
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-200"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white text-gray-500">Or</span>
+          </div>
+        </div>
+      </div>
+
+      <form @submit.prevent="handleRegister" class="space-y-4">
+        <BaseInput
+          v-model="form.username"
+          label="Username"
+          placeholder="Choose a username"
+        />
+        <BaseInput
+          v-model="form.email"
+          label="Email"
+          placeholder="Enter your email"
+        />
+        <BaseInput v-model="form.password" label="Password" type="password" />
+        <BaseInput
+          v-model="form.confirmPassword"
+          label="Confirm Password"
+          type="password"
+        />
 
         <div class="pt-4">
-          <BaseButton class="w-full py-3">Sign up</BaseButton>
+          <BaseButton
+            class="w-full shadow-lg shadow-verso-blue/30 py-3.5 text-lg"
+          >
+            Sign Up
+          </BaseButton>
         </div>
+
+        <p class="text-center text-sm text-gray-600 mt-4">
+          Already have an account?
+          <router-link
+            to="/login"
+            class="text-verso-blue font-bold hover:underline"
+          >
+            Log in
+          </router-link>
+        </p>
       </form>
     </div>
   </div>
 </template>
 
 <script setup>
+import { reactive } from "vue";
+import { useRouter } from "vue-router";
 import BaseInput from "@/components/ui/BaseInput.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
+
+const router = useRouter();
+const form = reactive({
+  username: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+});
+
+const handleRegister = () => {
+  // Add registration logic here
+  console.log("Registering...", form);
+  router.push("/");
+};
 </script>

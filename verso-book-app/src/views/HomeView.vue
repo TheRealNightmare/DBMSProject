@@ -16,7 +16,11 @@
 
         <div v-else class="space-y-10">
           <section>
-            <SectionHeader title="LATESTS" :hasLink="true" />
+            <SectionHeader
+              title="LATESTS"
+              :hasLink="true"
+              @viewAll="viewAll('latest')"
+            />
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
               <BookCard
                 v-for="book in latestBooks"
@@ -28,7 +32,11 @@
           </section>
 
           <section>
-            <SectionHeader title="RECOMMENDED BOOKS" :hasLink="true" />
+            <SectionHeader
+              title="RECOMMENDED BOOKS"
+              :hasLink="true"
+              @viewAll="viewAll('recommended')"
+            />
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
               <BookCard
                 v-for="book in recommendedBooks"
@@ -40,7 +48,11 @@
           </section>
 
           <section>
-            <SectionHeader title="EXCLUSIVE BOOKS" :hasLink="true" />
+            <SectionHeader
+              title="EXCLUSIVE BOOKS"
+              :hasLink="true"
+              @viewAll="viewAll('exclusive')"
+            />
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
               <BookCard
                 v-for="book in exclusiveBooks.slice(0, 2)"
@@ -52,7 +64,11 @@
           </section>
 
           <section>
-            <SectionHeader title="HIGHLY RATED BOOKS" :hasLink="true" />
+            <SectionHeader
+              title="HIGHLY RATED BOOKS"
+              :hasLink="true"
+              @viewAll="viewAll('highly-rated')"
+            />
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
               <BookCard
                 v-for="book in highlyRatedBooks.slice(0, 4)"
@@ -64,7 +80,11 @@
           </section>
 
           <section>
-            <SectionHeader title="FAVORITE BOOKS" :hasLink="true" />
+            <SectionHeader
+              title="FAVORITE BOOKS"
+              :hasLink="true"
+              @viewAll="viewAll('favorite')"
+            />
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               <BookCard
                 v-for="book in favoriteBooks"
@@ -76,9 +96,9 @@
           </section>
         </div>
       </main>
-
-      <Footer />
     </div>
+
+    <Footer class="relative z-50" />
 
     <div class="md:hidden">
       <BottomNav active="home" />
@@ -106,6 +126,11 @@ const highlyRatedBooks = ref([]);
 const favoriteBooks = ref([]);
 
 const goToBook = (id) => router.push(`/book/${id}`);
+
+// Navigation handler for View All
+const viewAll = (category) => {
+  router.push(`/category/${category}`);
+};
 
 onMounted(async () => {
   try {
