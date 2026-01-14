@@ -11,6 +11,14 @@
 
     <div class="flex flex-col gap-8 w-full items-center">
       <router-link
+        to="/dashboard"
+        class="p-3 rounded-xl transition text-gray-400"
+        active-class="text-white bg-verso-blue"
+      >
+        <LayoutGrid class="w-6 h-6" />
+      </router-link>
+
+      <router-link
         to="/"
         class="p-3 rounded-xl transition text-gray-400"
         active-class="text-white bg-verso-blue"
@@ -34,21 +42,13 @@
         <Download class="w-6 h-6" />
       </router-link>
 
-      <router-link to="/community" class="p-3 rounded-xl transition text-gray-400 " active-class="text-white bg-verso-blue">
+      <router-link
+        to="/community"
+        class="p-3 rounded-xl transition text-gray-400"
+        active-class="text-white bg-verso-blue"
+      >
         <Users class="w-6 h-6" />
       </router-link>
-
-      <!-- <button class="p-3 rounded-xl transition text-gray-400">
-        <LayoutGrid class="w-6 h-6" />
-      </button>
-
-      <button class="p-3 rounded-xl transition text-gray-400">
-        <Calendar class="w-6 h-6" />
-      </button>
-
-      <button class="p-3 rounded-xl transition text-gray-400">
-        <Users class="w-6 h-6" />
-      </button> -->
     </div>
   </aside>
 </template>
@@ -60,7 +60,6 @@ import {
   Clock,
   Download,
   LayoutGrid,
-  Calendar,
   Users,
 } from "lucide-vue-next";
 </script>
