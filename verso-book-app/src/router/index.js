@@ -9,6 +9,8 @@ import VerifyCode from "../views/auth/VerifyCode.vue";
 import ResetPassword from "../views/auth/ResetPassword.vue";
 const CommunityView = () => import("../views/CommunityView.vue");
 const ViewAllBooks = () => import("../views/ViewAllBooks.vue");
+const DashboardView = () => import("../views/DashboardView.vue");
+const EventView = () => import("../views/EventView.vue");
 
 // Lazy load views
 const BookDetailView = () => import("../views/BookDetailView.vue");
@@ -25,7 +27,9 @@ const routes = [
 
   // App Pages (Protected)
   { path: "/", component: HomeView },
-  { path: "/book/:id", component: BookDetailView }, // <--- This route handles the click
+  { path: "/dashboard", component: DashboardView },
+  { path: "/events", component: EventView }, // New Event Route
+  { path: "/book/:id", component: BookDetailView },
   { path: "/read/:id", component: ReaderView },
   { path: "/profile", component: ProfileView },
   { path: "/history", component: HistoryView },

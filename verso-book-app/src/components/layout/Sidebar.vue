@@ -43,6 +43,14 @@
       </router-link>
 
       <router-link
+        to="/events"
+        class="p-3 rounded-xl transition text-gray-400"
+        active-class="text-white bg-verso-blue"
+      >
+        <Calendar class="w-6 h-6" />
+      </router-link>
+
+      <router-link
         to="/community"
         class="p-3 rounded-xl transition text-gray-400"
         active-class="text-white bg-verso-blue"
@@ -61,5 +69,6 @@ import {
   Download,
   LayoutGrid,
   Users,
+  Calendar,
 } from "lucide-vue-next";
 </script>
