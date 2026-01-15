@@ -77,10 +77,11 @@
 </template>
 
 <script setup>
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import BaseInput from "@/components/ui/BaseInput.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
+import api from "@/services/api";
 
 const router = useRouter();
 const form = reactive({
@@ -89,10 +90,35 @@ const form = reactive({
   password: "",
   confirmPassword: "",
 });
+const errorMessage = ref("");
 
-const handleRegister = () => {
-  // Add registration logic here
-  console.log("Registering...", form);
-  router.push("/");
+const handleRegister = async () => {
+  errorMessage.value = "";
+  try {
+    // Call the register endpoint
+    const response = await api.post("/register", {
+      username: form.username,
+      email: form.email,
+      password: form.password,
+      // Map 'confirmPassword' to 'password_confirmation' for Laravel validation
+      password_confirmation: form.confirmPassword,
+    });
+
+    // Store token immediately to log them in
+    localStorage.setItem("auth_token", response.data.token);
+
+    console.log("Registration successful");
+    router.push("/");
+  } catch (error) {
+    console.error("Registration failed:", error);
+    // Display validation errors if available
+    if (error.response?.data?.errors) {
+      errorMessage.value = Object.values(error.response.data.errors)
+        .flat()
+        .join(", ");
+    } else {
+      errorMessage.value = "Registration failed. Please try again.";
+    }
+  }
 };
 </script>

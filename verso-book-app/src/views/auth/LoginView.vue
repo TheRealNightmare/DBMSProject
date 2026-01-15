@@ -70,16 +70,38 @@
 </template>
 
 <script setup>
-import { reactive } from "vue";
+import { reactive, ref } from "vue"; // Added ref for error handling
 import { useRouter } from "vue-router";
 import BaseInput from "@/components/ui/BaseInput.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
+import api from "@/services/api"; // Import the API client
 
 const router = useRouter();
 const form = reactive({ email: "", password: "" });
+const errorMessage = ref("");
 
-const handleLogin = () => {
-  console.log("Logging in...", form);
-  router.push("/");
+const handleLogin = async () => {
+  errorMessage.value = ""; // Reset error
+  try {
+    // Call the login endpoint defined in api.php
+    const response = await api.post("/login", {
+      email: form.email,
+      password: form.password,
+    });
+
+    // Store the token from the response
+    localStorage.setItem("auth_token", response.data.token);
+
+    // Optional: Store user info
+    localStorage.setItem("user", JSON.stringify(response.data.user));
+
+    console.log("Login successful");
+    router.push("/"); // Redirect to home/dashboard
+  } catch (error) {
+    console.error("Login failed:", error);
+    errorMessage.value =
+      error.response?.data?.message ||
+      "Login failed. Please check your credentials.";
+  }
 };
 </script>
