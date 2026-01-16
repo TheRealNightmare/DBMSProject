@@ -18,13 +18,6 @@
               <h2 class="font-bold text-verso-dark text-lg tracking-tight">
                 Community
               </h2>
-              <div class="relative mt-4">
-                <input
-                  type="text"
-                  placeholder="Search channels..."
-                  class="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-verso-blue transition"
-                />
-              </div>
             </div>
 
             <div class="flex-1 overflow-y-auto p-3 space-y-1">
@@ -32,6 +25,13 @@
                 class="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider"
               >
                 Channels
+              </div>
+
+              <div
+                v-if="channels.length === 0"
+                class="px-3 py-4 text-sm text-gray-500 italic"
+              >
+                No channels found.
               </div>
 
               <button
@@ -47,37 +47,6 @@
               >
                 <span class="text-lg">#</span>
                 <span class="font-medium text-sm">{{ channel.name }}</span>
-                <span
-                  v-if="channel.unread"
-                  class="ml-auto bg-verso-blue text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                >
-                  {{ channel.unread }}
-                </span>
-              </button>
-
-              <div
-                v-if="onlineUsers.length > 0"
-                class="px-3 py-2 mt-4 text-xs font-bold text-gray-400 uppercase tracking-wider"
-              >
-                Online Members
-              </div>
-              <button
-                v-for="user in onlineUsers"
-                :key="user.id"
-                class="w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition hover:bg-gray-100"
-              >
-                <div class="relative">
-                  <img
-                    :src="user.avatar"
-                    class="w-8 h-8 rounded-full object-cover"
-                  />
-                  <div
-                    class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"
-                  ></div>
-                </div>
-                <span class="font-medium text-sm text-verso-dark">{{
-                  user.name
-                }}</span>
               </button>
             </div>
           </div>
@@ -90,25 +59,23 @@
                 <span class="text-2xl text-gray-400">#</span>
                 <div>
                   <h3 class="font-bold text-verso-dark">
-                    {{
-                      channels.find((c) => c.id === activeChannel)?.name ||
-                      "Select a Channel"
-                    }}
+                    {{ currentChannelName }}
                   </h3>
-                  <p class="text-xs text-gray-500">1,240 members • 32 online</p>
                 </div>
-              </div>
-              <div class="flex -space-x-2">
-                <img
-                  v-for="i in 3"
-                  :key="i"
-                  :src="`https://placehold.co/40x40?text=${i}`"
-                  class="w-8 h-8 rounded-full border-2 border-white"
-                />
               </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50">
+            <div
+              class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50"
+              ref="messagesContainer"
+            >
+              <div
+                v-if="messages.length === 0"
+                class="text-center text-gray-400 mt-10"
+              >
+                <p>No messages yet. Be the first to say hello!</p>
+              </div>
+
               <div
                 v-for="msg in messages"
                 :key="msg.id"
@@ -151,30 +118,25 @@
             <div class="p-4 bg-white border-t border-gray-100">
               <div
                 class="bg-gray-50 border border-gray-200 rounded-xl flex items-center px-4 py-2 gap-3 focus-within:ring-2 focus-within:ring-verso-blue/20 focus-within:border-verso-blue transition"
+                :class="{ 'opacity-50 pointer-events-none': !activeChannel }"
               >
-                <button class="text-gray-400 hover:text-verso-blue transition">
-                  <Plus class="w-5 h-5" />
-                </button>
-
                 <input
                   v-model="newMessage"
                   type="text"
-                  :placeholder="`Message #${
-                    channels.find((c) => c.id === activeChannel)?.name ||
-                    'Channel'
-                  }...`"
+                  :placeholder="
+                    activeChannel
+                      ? `Message #${currentChannelName}...`
+                      : 'Select a channel to chat'
+                  "
                   class="flex-1 bg-transparent border-none focus:outline-none text-verso-dark placeholder-gray-400 py-2"
                   @keyup.enter="sendMessage"
+                  :disabled="!activeChannel"
                 />
-
-                <button class="text-gray-400 hover:text-verso-blue transition">
-                  <Smile class="w-5 h-5" />
-                </button>
 
                 <button
                   @click="sendMessage"
-                  class="bg-verso-blue text-white p-2 rounded-lg hover:opacity-90 transition shadow-sm"
-                  :disabled="!newMessage.trim()"
+                  class="bg-verso-blue text-white p-2 rounded-lg hover:opacity-90 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="!newMessage.trim() || !activeChannel"
                 >
                   <Send class="w-4 h-4" />
                 </button>
@@ -192,11 +154,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { ref, onMounted, onUnmounted, nextTick, watch, computed } from "vue";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Navbar from "@/components/layout/Navbar.vue";
 import BottomNav from "@/components/layout/BottomNav.vue";
-import { Send, Plus, Smile } from "lucide-vue-next";
+import { Send } from "lucide-vue-next";
 import api from "@/services/api";
 import createEcho from "@/services/echo";
 
@@ -206,52 +168,54 @@ const channels = ref([]);
 const messages = ref([]);
 const newMessage = ref("");
 const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-const onlineUsers = ref([]);
+const messagesContainer = ref(null);
 
 let echoInstance = null;
 
-// Lifecycle: Initialize
+const currentChannelName = computed(() => {
+  return (
+    channels.value.find((c) => c.id === activeChannel.value)?.name ||
+    "Select a Channel"
+  );
+});
+
+// Lifecycle
 onMounted(async () => {
   await fetchGroups();
-
-  // Initialize Echo
   echoInstance = createEcho();
 
-  // Select first channel by default if available
+  // If groups exist, select the first one automatically
   if (channels.value.length > 0) {
     activeChannel.value = channels.value[0].id;
   }
 });
 
-// Lifecycle: Cleanup
 onUnmounted(() => {
   if (echoInstance) {
     echoInstance.disconnect();
   }
 });
 
-// Watcher: Switch Channels & Subscribe
+// Watchers
 watch(activeChannel, (newId, oldId) => {
   if (oldId && echoInstance) {
     echoInstance.leave(`community.${oldId}`);
   }
 
   if (newId) {
+    messages.value = []; // Clear old messages immediately
     fetchMessages(newId);
     subscribeToChannel(newId);
   }
 });
 
-// --- API Actions ---
-
+// API Actions
 const fetchGroups = async () => {
   try {
     const response = await api.get("/community/groups");
-    // Map backend groups to frontend structure
     channels.value = response.data.map((g) => ({
       id: g.group_id,
       name: g.name,
-      unread: 0,
     }));
   } catch (error) {
     console.error("Failed to fetch groups:", error);
@@ -269,40 +233,48 @@ const fetchMessages = async (groupId) => {
 };
 
 const sendMessage = async () => {
-  if (!newMessage.value.trim()) return;
+  if (!newMessage.value.trim() || !activeChannel.value) return;
 
   const tempText = newMessage.value;
-  newMessage.value = ""; // Clear input immediately for UX
+  newMessage.value = ""; // Clear input immediately
 
   try {
-    await api.post(`/community/groups/${activeChannel.value}/messages`, {
-      message: tempText,
-    });
-    // The socket event will handle adding the message to the UI
+    const response = await api.post(
+      `/community/groups/${activeChannel.value}/messages`,
+      {
+        message: tempText,
+      }
+    );
+
+    // Fallback: Add message manually if socket is slow or fails
+    const returnedMsg = response.data.message;
+    if (!messages.value.some((m) => m.id === returnedMsg.message_id)) {
+      messages.value.push(transformMessage(returnedMsg));
+      scrollToBottom();
+    }
   } catch (error) {
     console.error("Failed to send message:", error);
     alert("Message failed to send.");
+    newMessage.value = tempText; // Restore text on error
   }
 };
 
-// --- Real-time Logic ---
-
+// Real-time
 const subscribeToChannel = (groupId) => {
   if (!echoInstance) return;
 
-  console.log(`Subscribing to community.${groupId}...`);
-
   echoInstance.private(`community.${groupId}`).listen("MessageSent", (e) => {
-    console.log("Event received:", e);
+    // Prevent duplicate if we added it manually via sendMessage
+    if (messages.value.some((m) => m.id === e.message_id)) return;
 
-    // Transform the incoming event payload to match our UI
     const incomingMsg = {
       id: e.message_id,
       sender: e.sender.username,
       avatar: e.sender.profile_image || "https://placehold.co/100x100",
       text: e.message_body,
       time: formatTime(e.sent_at),
-      isMe: e.sender.user_id === currentUser.user_id,
+      // Loose comparison (==) for string/int safety
+      isMe: e.sender.user_id == currentUser.user_id,
     };
 
     messages.value.push(incomingMsg);
@@ -310,8 +282,7 @@ const subscribeToChannel = (groupId) => {
   });
 };
 
-// --- Helpers ---
-
+// Helpers
 const transformMessage = (msg) => {
   return {
     id: msg.message_id,
@@ -319,7 +290,7 @@ const transformMessage = (msg) => {
     avatar: msg.sender?.profile_image || "https://placehold.co/100x100",
     text: msg.message_body,
     time: formatTime(msg.sent_at),
-    isMe: msg.sender_id === currentUser.user_id,
+    isMe: msg.sender_id == currentUser.user_id,
   };
 };
 
@@ -331,11 +302,8 @@ const formatTime = (isoString) => {
 
 const scrollToBottom = () => {
   nextTick(() => {
-    const container = document.querySelector(
-      ".overflow-y-auto.bg-gray-50\\/50"
-    );
-    if (container) {
-      container.scrollTop = container.scrollHeight;
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     }
   });
 };

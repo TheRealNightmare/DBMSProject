@@ -6,6 +6,7 @@ use App\Events\MessageSent;
 use App\Models\Group;
 use App\Models\GroupMessage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CommunityController extends Controller
 {
@@ -19,12 +20,11 @@ class CommunityController extends Controller
     // Get chat history for a specific group
     public function getMessages($groupId)
     {
-        // Verify group exists
         $group = Group::findOrFail($groupId);
 
         $messages = GroupMessage::with('sender:user_id,username,profile_image')
             ->where('group_id', $groupId)
-            ->orderBy('sent_at', 'asc') // Oldest first
+            ->orderBy('sent_at', 'asc')
             ->get();
 
         return response()->json($messages);
@@ -38,11 +38,12 @@ class CommunityController extends Controller
         ]);
 
         $group = Group::findOrFail($groupId);
+        $user = $request->user();
 
         // Create the message
         $message = GroupMessage::create([
             'group_id' => $group->group_id,
-            'sender_id' => $request->user()->user_id,
+            'sender_id' => $user->user_id,
             'message_body' => $request->input('message'),
             'sent_at' => now(),
         ]);
@@ -51,7 +52,8 @@ class CommunityController extends Controller
         $message->load('sender');
 
         // Broadcast the event to the WebSocket channel
-        broadcast(new MessageSent($message))->toOthers();
+        // REMOVED ->toOthers() so the sender also receives the event
+        broadcast(new MessageSent($message));
 
         return response()->json([
             'status' => 'Message Sent!',

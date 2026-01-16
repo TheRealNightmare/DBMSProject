@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             BookSeeder::class,
             EventSeeder::class,
             UserInteractionSeeder::class,
+            GroupSeeder::class,
         ]);
     }
 }

@@ -8,11 +8,11 @@ const createEcho = () => {
 
   return new Echo({
     broadcaster: "reverb",
-    key: "app-key", // Default Reverb key is often 'app-key' locally
-    wsHost: "localhost", // Or your backend IP
-    wsPort: 8080, // Default Reverb port
+    key: "verso-app-key", // Must match REVERB_APP_KEY in .env
+    wsHost: "localhost",
+    wsPort: 8080,
     wssPort: 8080,
-    forceTLS: false, // Set to true if using https in production
+    forceTLS: false,
     enabledTransports: ["ws", "wss"],
     authEndpoint: "http://localhost:8000/api/broadcasting/auth",
     auth: {
