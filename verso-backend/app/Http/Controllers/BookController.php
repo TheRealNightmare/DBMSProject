@@ -80,4 +80,26 @@ class BookController extends Controller
             'total_chapters' => Chapter::where('book_id', $bookId)->count()
         ]);
     }
+
+    public function storeAnnotation(Request $request, $bookId) {
+    // 1. Validate the incoming data
+    $validated = $request->validate([
+        'chapter_id' => 'required|exists:chapters,chapter_id',
+        'note' => 'required|string',
+        'highlighted_text' => 'nullable|string',
+        'color' => 'nullable|string',
+    ]);
+
+    // 2. Create the annotation
+    // We explicitly merge the book_id (from route) and user_id (from Auth)
+    $annotation = Annotation::create(array_merge($validated, [
+        'user_id' => Auth::id(),
+        'book_id' => $bookId,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]));
+
+    // 3. Return the new annotation so the frontend can display it immediately
+    return response()->json($annotation, 201);
+    }
 }

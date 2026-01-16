@@ -21,7 +21,7 @@
               :hasLink="true"
               @viewAll="viewAll('latest')"
             />
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-6">
               <BookCard
                 v-for="book in latestBooks"
                 :key="book.id"
@@ -37,7 +37,7 @@
               :hasLink="true"
               @viewAll="viewAll('recommended')"
             />
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-6">
               <BookCard
                 v-for="book in recommendedBooks"
                 :key="book.id"
@@ -53,7 +53,7 @@
               :hasLink="true"
               @viewAll="viewAll('exclusive')"
             />
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
               <BookCard
                 v-for="book in exclusiveBooks.slice(0, 2)"
                 :key="book.id"
@@ -69,7 +69,7 @@
               :hasLink="true"
               @viewAll="viewAll('highly-rated')"
             />
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
               <BookCard
                 v-for="book in highlyRatedBooks.slice(0, 4)"
                 :key="book.id"
@@ -85,7 +85,7 @@
               :hasLink="true"
               @viewAll="viewAll('favorite')"
             />
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-6">
               <BookCard
                 v-for="book in favoriteBooks"
                 :key="book.id"
