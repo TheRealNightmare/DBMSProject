@@ -4,9 +4,9 @@
   >
     <div class="flex justify-between items-start mb-8">
       <h2 class="font-bold text-verso-dark text-lg">Profile</h2>
-      <button class="text-gray-500 hover:text-verso-dark">
+      <router-link to="/profile" class="text-gray-500 hover:text-verso-dark">
         <Edit2 class="w-4 h-4" />
-      </button>
+      </router-link>
     </div>
 
     <div class="flex flex-col items-center mb-10 relative">
@@ -14,10 +14,7 @@
         class="w-24 h-24 rounded-full p-1 border-2 border-gray-300 relative mb-3"
       >
         <img
-          :src="
-            user.profile_image ||
-            'https://i.pravatar.cc/150?u=a042581f4e29026024d'
-          "
+          :src="profileImageUrl"
           class="w-full h-full rounded-full object-cover"
           alt="User Profile"
         />
@@ -184,6 +181,16 @@ const todos = ref([
 const today = new Date();
 const currentCursor = ref(new Date());
 
+// [FIX 2] Computed Property for Image URL
+const profileImageUrl = computed(() => {
+  // If user has a profile image, prepend the storage URL
+  if (user.value.profile_image) {
+    return `http://localhost:8000/storage/${user.value.profile_image}`;
+  }
+  // Fallback to placeholder
+  return "https://i.pravatar.cc/150?u=a042581f4e29026024d";
+});
+
 // --- Computed Calendar Logic ---
 const currentMonthName = computed(() => {
   return currentCursor.value.toLocaleString("default", { month: "short" });
@@ -249,8 +256,6 @@ onMounted(async () => {
     // 1. Fetch Profile
     const profileRes = await api.get("/profile");
     user.value = profileRes.data;
-
-    // Note: Events fetching removed as replaced by Todo list
   } catch (error) {
     console.error("Error loading profile:", error);
   } finally {
