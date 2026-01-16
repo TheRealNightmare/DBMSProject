@@ -14,7 +14,16 @@
           STORAGE
         </h1>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+        <div v-if="loading" class="flex justify-center py-20">
+          <div
+            class="animate-spin rounded-full h-10 w-10 border-b-2 border-verso-blue"
+          ></div>
+        </div>
+
+        <div
+          v-else
+          class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8"
+        >
           <div
             v-for="book in storageBooks"
             :key="book.id"
@@ -35,15 +44,22 @@
             </div>
 
             <h3
-              class="font-bold text-verso-dark text-sm leading-tight mb-1 uppercase"
+              class="font-bold text-verso-dark text-sm leading-tight mb-1 uppercase line-clamp-2"
             >
               {{ book.title }}
             </h3>
 
-            <p class="text-xs text-verso-dark font-bold italic">
+            <p class="text-xs text-verso-dark font-bold italic truncate">
               {{ book.author }}
             </p>
           </div>
+        </div>
+
+        <div
+          v-if="!loading && storageBooks.length === 0"
+          class="text-center py-20 text-gray-500"
+        >
+          Your storage is empty.
         </div>
       </main>
     </div>
@@ -55,33 +71,32 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import bookService from "@/services/bookService";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Navbar from "@/components/layout/Navbar.vue";
 import Footer from "@/components/layout/Footer.vue";
 import BottomNav from "@/components/layout/BottomNav.vue";
 
 const router = useRouter();
+const loading = ref(true);
+const storageBooks = ref([]);
 
-// Navigate to Book Detail Page
 const goToBook = (id) => {
   router.push(`/book/${id}`);
 };
 
-// Mock Data with REAL IDs so the detail page loads successfully
-const storageBooks = ref([
-  {
-    id: "OL17930368W", // Valid OpenLibrary Work ID
-    title: "DAHN NHAN VAN HOC NGHE THUAT",
-    author: "Lorem Ipsum",
-    image: "https://covers.openlibrary.org/b/id/12556509-L.jpg",
-  },
-  {
-    id: "OL8259443W", // Valid OpenLibrary Work ID
-    title: "DANH NHAN VATLY",
-    author: "Lorem Ipsum",
-    image: "https://covers.openlibrary.org/b/id/8259443-L.jpg",
-  },
-]);
+onMounted(async () => {
+  try {
+    loading.value = true;
+    // NOTE: Fetching 'business' or 'favorite' type books to simulate a saved library
+    // Update "business" to whatever category you want to show here, or create a 'saved' endpoint later.
+    storageBooks.value = await bookService.getBooks("business", 10);
+  } catch (e) {
+    console.error("Failed to load storage books", e);
+  } finally {
+    loading.value = false;
+  }
+});
 </script>

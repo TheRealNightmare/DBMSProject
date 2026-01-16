@@ -8,24 +8,28 @@
       class="flex-1 flex flex-col relative md:ml-20 transition-all duration-300"
     >
       <header
-        class="flex items-center justify-between px-12 py-6 shrink-0 z-20 h-24"
+        class="flex items-center justify-between px-12 py-6 shrink-0 z-20 h-24 border-b border-gray-200/50"
       >
         <button
           @click="$router.back()"
           class="flex items-center text-verso-dark font-bold hover:text-verso-blue transition"
         >
           <ChevronLeft class="w-5 h-5 mr-2" />
-          <span class="text-lg">Think Again</span>
+          <span class="text-lg line-clamp-1 max-w-[150px]">{{
+            book?.title || "Loading..."
+          }}</span>
         </button>
 
         <div class="text-center absolute left-1/2 -translate-x-1/2">
           <h2
-            class="text-xl font-bold text-gray-500 uppercase tracking-widest mb-1"
+            class="text-xl font-bold text-gray-500 uppercase tracking-widest mb-1 hidden md:block"
           >
-            Chapter 1
+            Reading
           </h2>
-          <h1 class="text-3xl font-extrabold text-verso-dark">
-            Lorem Ispsum Dolor
+          <h1
+            class="text-xl md:text-3xl font-extrabold text-verso-dark truncate max-w-[300px] md:max-w-md"
+          >
+            {{ book?.title || "..." }}
           </h1>
         </div>
 
@@ -35,18 +39,6 @@
             class="p-2 hover:bg-gray-200 rounded-lg transition text-verso-dark"
           >
             <StickyNote class="w-6 h-6" />
-          </button>
-          <button
-            @click="toggleSidebar"
-            class="p-2 hover:bg-gray-200 rounded-lg transition text-verso-dark"
-          >
-            <Bookmark class="w-6 h-6" />
-          </button>
-          <button
-            @click="toggleSidebar"
-            class="p-2 hover:bg-gray-200 rounded-lg transition text-verso-dark"
-          >
-            <Edit3 class="w-6 h-6" />
           </button>
         </div>
       </header>
@@ -60,70 +52,28 @@
           <ChevronLeft class="w-10 h-10" />
         </button>
 
+        <div v-if="loading" class="flex-1 flex justify-center items-center">
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-verso-blue"
+          ></div>
+        </div>
+
         <div
-          class="flex-1 h-full max-w-6xl mx-auto overflow-y-auto no-scrollbar px-8 py-4"
+          v-else
+          class="flex-1 h-full max-w-6xl mx-auto overflow-y-auto no-scrollbar px-8 py-8"
         >
           <div
-            class="columns-1 md:columns-2 gap-20 text-justify text-verso-dark leading-loose text-sm font-semibold h-full"
+            class="text-justify text-verso-dark leading-loose text-lg font-serif h-full"
           >
-            <p class="mb-8">
-              Sed ut perspiciatis unde omnis iste natus error sit voluptatem
-              accusantium doloremque laudantium, totam rem aperiam, eaque ipsa
-              quae ab illo inventore veritatis et quasi architecto beatae vitae
-              dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas.
-            </p>
-            <p class="mb-8">
-              Totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et
-              quasi architecto beatae vitae dicta sunt explicabo. Nemo enim
-              ipsam voluptatem quia voluptas.
-            </p>
-            <p class="mb-8">
-              Sit aspernatur aut odit aut fugit, sed quia consequuntur magni
-              dolores eos qui ratione voluptatem sequi nesciunt. Neque porro
-              quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur,
-              adipisci velit, sed quia non numquam eius modi tempora incidunt ut
-              labore et.
-            </p>
-            <p class="mb-8">
-              Dolore magnam aliquam quaerat voluptatem. Ut enim ad minima
-              veniam, quis nostrum exercitationem ullam corporis suscipit
-              laboriosam, nisi ut aliquid ex ea.
-            </p>
-            <p class="mb-8">
-              Commodo consequatur? Quis autem vel eum iure reprehenderit qui in
-              ea voluptate velit esse quam nihil molestiae consequatur, vel
-              illum qui dolorem eum.
-            </p>
-            <p class="mb-8">Fugiat quo voluptas nulla pariatur?</p>
-            <p class="mb-8">
-              Sed ut perspiciatis unde omnis iste natus error sit voluptatem
-              accusantium doloremque laudantium, totam rem aperiam, eaque ipsa
-              quae ab illo inventore veritatis et quasi architecto beatae vitae
-              dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas.
-            </p>
-            <p class="mb-8">
-              Totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et
-              quasi architecto beatae vitae dicta sunt explicabo. Nemo enim
-              ipsam voluptatem quia voluptas.
-            </p>
-            <p class="mb-8">
-              Sit aspernatur aut odit aut fugit, sed quia consequuntur magni
-              dolores eos qui ratione voluptatem sequi nesciunt. Neque porro
-              quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur,
-              adipisci velit, sed quia non numquam eius modi tempora incidunt ut
-              labore et.
-            </p>
-            <p class="mb-8">
-              Dolore magnam aliquam quaerat voluptatem. Ut enim ad minima
-              veniam, quis nostrum exercitationem ullam corporis suscipit
-              laboriosam, nisi ut aliquid ex ea.
-            </p>
-            <p class="mb-8">
-              Commodo consequatur? Quis autem vel eum iure reprehenderit qui in
-              ea voluptate velit esse quam nihil molestiae consequatur, vel
-              illum qui dolorem eum.
-            </p>
-            <p class="mb-8">Fugiat quo voluptas nulla pariatur?</p>
+            <div v-if="book && book.description">
+              <p class="mb-8 whitespace-pre-line">{{ book.description }}</p>
+              <p class="mb-8 text-gray-400 italic text-center text-sm">
+                (Full book content not available in preview)
+              </p>
+            </div>
+            <div v-else class="text-center text-gray-500 mt-20">
+              Content not available.
+            </div>
           </div>
         </div>
 
@@ -137,7 +87,7 @@
       <footer
         class="h-16 flex items-center justify-center font-extrabold text-verso-dark text-lg"
       >
-        1/10
+        1/1
       </footer>
     </div>
 
@@ -189,7 +139,9 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import bookService from "@/services/bookService";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import {
   ChevronLeft,
@@ -199,23 +151,34 @@ import {
   Edit3,
 } from "lucide-vue-next";
 
-// Initial state matches image_98ffd3 (Open)
+const route = useRoute();
 const showAnnotations = ref(true);
+const loading = ref(true);
+const book = ref(null);
 
 const toggleSidebar = () => {
   showAnnotations.value = !showAnnotations.value;
 };
 
+// Mock Annotations (Keep these for UI demo until backend supports them)
 const annotations = ref([
-  { chapter: "Chapter 1: Lorem Ipsum Dolor Totum" },
-  { chapter: "Chapter 2: Lorem Ipsum Dolor" },
-  { chapter: "Chapter 3: Lorem Ipsum Dolor Totum" },
-  { chapter: "Chapter 4: Lorem Ipsum Dolor Totum" },
-  { chapter: "Chapter 5: Lorem Ipsum Dolor Totum .Lorem Ipsum Dolor Totum" },
-  { chapter: "Chapter 6: Lorem Ipsum Dolor Totum" },
-  { chapter: "Chapter 7: Lorem Ipsum Dolor Totum Lorem Ipsum Dolor Totum" },
-  { chapter: "Chapter 8: Lorem Ipsum Dolor Totum Lorem Ipsum Dolor Totum" },
+  { chapter: "Note 1", text: "Interesting concept here." },
+  { chapter: "Note 2", text: "Reference to earlier chapter." },
 ]);
+
+onMounted(async () => {
+  try {
+    loading.value = true;
+    const bookId = route.params.id;
+    if (bookId) {
+      book.value = await bookService.getBookDetails(bookId);
+    }
+  } catch (e) {
+    console.error("Failed to load book content", e);
+  } finally {
+    loading.value = false;
+  }
+});
 </script>
 
 <style scoped>

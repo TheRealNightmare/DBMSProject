@@ -14,19 +14,25 @@
           HISTORY
         </h1>
 
-        <div class="space-y-10">
+        <div v-if="loading" class="flex justify-center py-20">
+          <div
+            class="animate-spin rounded-full h-10 w-10 border-b-2 border-verso-blue"
+          ></div>
+        </div>
+
+        <div v-else class="space-y-10">
           <div
             v-for="book in historyBooks"
             :key="book.id"
             class="flex flex-col md:flex-row gap-8 items-start relative group"
           >
             <div
-              class="w-32 md:w-40 flex-shrink-0 shadow-lg rounded-md overflow-hidden"
+              class="w-32 md:w-40 flex-shrink-0 shadow-lg rounded-md overflow-hidden bg-gray-200 aspect-[2/3]"
             >
               <img
                 :src="book.image"
                 :alt="book.title"
-                class="w-full h-auto object-cover aspect-[2/3]"
+                class="w-full h-full object-cover"
               />
             </div>
 
@@ -38,36 +44,41 @@
               </h2>
 
               <div class="flex items-center gap-2 mb-6">
-                <span class="font-bold text-verso-dark text-lg">4</span>
+                <span class="font-bold text-verso-dark text-lg">{{
+                  book.rating
+                }}</span>
                 <div class="flex items-center gap-1 text-yellow-400">
-                  <Star v-for="i in 4" :key="i" class="w-4 h-4 fill-current" />
-                  <Star class="w-4 h-4 text-gray-400" />
+                  <Star
+                    v-for="i in 5"
+                    :key="i"
+                    :class="[
+                      'w-4 h-4',
+                      i <= Math.round(book.rating)
+                        ? 'fill-current'
+                        : 'text-gray-300 fill-none',
+                    ]"
+                  />
                 </div>
-                <span class="text-verso-dark font-bold text-sm italic ml-1"
-                  >• 1 Review</span
-                >
               </div>
 
               <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6 max-w-3xl">
                 <div>
                   <p class="text-xs text-gray-500 mb-1">Author</p>
-                  <p class="text-verso-dark font-bold text-sm italic">Lorem</p>
+                  <p class="text-verso-dark font-bold text-sm italic">
+                    {{ book.author }}
+                  </p>
                 </div>
                 <div>
                   <p class="text-xs text-gray-500 mb-1">Genre</p>
                   <p class="text-verso-dark font-bold text-sm italic">
-                    Romance
+                    {{ book.category || "General" }}
                   </p>
                 </div>
                 <div>
-                  <p class="text-xs text-gray-500 mb-1">Producer</p>
+                  <p class="text-xs text-gray-500 mb-1">Status</p>
                   <p class="text-verso-dark font-bold text-sm italic">
-                    Updating
+                    Completed
                   </p>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-500 mb-1">Release status</p>
-                  <p class="text-verso-dark font-bold text-sm italic">25/50</p>
                 </div>
               </div>
 
@@ -75,7 +86,7 @@
                 @click="startReading(book.id)"
                 class="bg-verso-blue text-white px-10 py-2 rounded-md font-medium text-sm hover:opacity-90 transition shadow-sm mb-6"
               >
-                Read
+                Read Again
               </button>
 
               <p class="text-sm font-bold text-verso-dark italic">
@@ -91,6 +102,13 @@
             </button>
           </div>
         </div>
+
+        <div
+          v-if="!loading && historyBooks.length === 0"
+          class="text-center py-20 text-gray-500"
+        >
+          No reading history found.
+        </div>
       </main>
     </div>
     <Footer class="relative z-50" />
@@ -101,8 +119,9 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import bookService from "@/services/bookService";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Navbar from "@/components/layout/Navbar.vue";
 import Footer from "@/components/layout/Footer.vue";
@@ -110,34 +129,36 @@ import BottomNav from "@/components/layout/BottomNav.vue";
 import { Star, X } from "lucide-vue-next";
 
 const router = useRouter();
+const loading = ref(true);
+const historyBooks = ref([]);
 
-// Function to handle navigation to the Reader view
 const startReading = (id) => {
   router.push(`/read/${id}`);
 };
 
-// Mock Data matching the image exactly
-const historyBooks = ref([
-  {
-    id: 1,
-    title: "DANH NHAN VAT LY",
-    image: "https://covers.openlibrary.org/b/id/8259443-L.jpg", // Einstein/Physics cover placeholder
-    statusLabel: "Read",
-    date: "8/16/13 06:13 PM",
-  },
-  {
-    id: 2,
-    title: "DANH NHAN VAN HOC NGHE THUAT",
-    image: "https://covers.openlibrary.org/b/id/12556509-L.jpg", // Literature cover placeholder
-    statusLabel: "Save",
-    date: "8/16/13 06:13 PM",
-  },
-  {
-    id: 3,
-    title: "DANH NHAN VAT LY", // Matches text in image even though cover is Hemingway
-    image: "https://covers.openlibrary.org/b/id/10603788-L.jpg", // The Sun Also Rises cover
-    statusLabel: "Favourite",
-    date: "8/16/13 06:13 PM",
-  },
-]);
+onMounted(async () => {
+  try {
+    loading.value = true;
+    // NOTE: Since the backend doesn't have a specific 'history' endpoint yet,
+    // we fetch the latest books to simulate the history view.
+    const books = await bookService.getBooks("latest", 5);
+
+    // Map API data to the History UI specific fields
+    historyBooks.value = books.map((book) => ({
+      ...book,
+      statusLabel: "Read", // Mock status until backend supports user tracking
+      date:
+        new Date().toLocaleDateString() +
+        " " +
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+    }));
+  } catch (e) {
+    console.error("Failed to load history", e);
+  } finally {
+    loading.value = false;
+  }
+});
 </script>

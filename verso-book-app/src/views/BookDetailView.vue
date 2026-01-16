@@ -1,6 +1,3 @@
-{ type: uploaded file fileName:
-therealnightmare/dbmsproject/DBMSProject-6a2ad260c79aa3377001192bc31229bf4b0ceb78/verso-book-app/src/views/BookDetailView.vue
-fullContent:
 <template>
   <div class="min-h-screen bg-verso-cream font-sans flex flex-col">
     <Sidebar />
@@ -30,15 +27,15 @@ fullContent:
           class="flex flex-col md:flex-row gap-12 items-start"
         >
           <div class="w-full md:w-80 flex-shrink-0 relative">
-            <div class="rounded-lg shadow-2xl overflow-hidden bg-gray-200">
+            <div
+              class="rounded-lg shadow-2xl overflow-hidden bg-gray-200 aspect-[2/3]"
+            >
               <img
                 :src="
-                  book.cover_i
-                    ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
-                    : 'https://placehold.co/300x450'
+                  book.image || 'https://placehold.co/300x450?text=No+Cover'
                 "
                 :alt="book.title"
-                class="w-full h-auto object-cover block"
+                class="w-full h-full object-cover block"
               />
             </div>
             <div class="absolute top-10 -left-1 bg-blue-500 w-1 h-20"></div>
@@ -53,37 +50,34 @@ fullContent:
 
             <div class="flex items-center gap-2 mb-8">
               <span class="font-bold text-verso-dark text-lg">{{
-                book.rating
+                book.rating || 0
               }}</span>
               <div class="flex items-center gap-1">
                 <Star
-                  v-for="i in 4"
+                  v-for="i in 5"
                   :key="i"
-                  class="w-4 h-4 fill-yellow-400 text-yellow-400"
+                  :class="[
+                    'w-4 h-4',
+                    i <= Math.round(book.rating)
+                      ? 'fill-yellow-400 text-yellow-400'
+                      : 'text-gray-400',
+                  ]"
                 />
-                <Star class="w-4 h-4 text-gray-400" />
               </div>
-              <span class="text-verso-dark font-bold ml-2">• 1 Review</span>
             </div>
 
-            <div class="grid grid-cols-4 gap-4 mb-4 text-sm">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
               <div>
                 <p class="text-gray-500 mb-1">Author</p>
                 <p class="text-verso-dark font-bold italic">
-                  {{ book.author_mock || "Dong Vu" }}
+                  {{ book.authors?.[0]?.name || book.author || "Unknown" }}
                 </p>
               </div>
-              <div>
+              <div v-if="book.category">
                 <p class="text-gray-500 mb-1">Genre</p>
-                <p class="text-verso-dark font-bold italic">Romance</p>
-              </div>
-              <div>
-                <p class="text-gray-500 mb-1">Producer</p>
-                <p class="text-verso-dark font-bold italic">Updating</p>
-              </div>
-              <div>
-                <p class="text-gray-500 mb-1">Release status</p>
-                <p class="text-verso-dark font-bold italic">25/50</p>
+                <p class="text-verso-dark font-bold italic">
+                  {{ book.category }}
+                </p>
               </div>
             </div>
 
@@ -110,36 +104,15 @@ fullContent:
             </div>
 
             <div
-              class="mb-10 text-verso-dark font-medium leading-relaxed text-sm text-justify"
+              class="mb-10 text-verso-dark font-medium leading-relaxed text-sm text-justify whitespace-pre-line"
             >
-              “{{ bookDescription }}”
-            </div>
-
-            <div class="mt-auto">
-              <h3 class="text-gray-600 font-bold mb-4">Comment (1)</h3>
-
-              <div class="bg-blue-200/40 p-5 rounded-lg flex gap-4 items-start">
-                <img
-                  src="https://placehold.co/50x50/333/fff?text=HQ"
-                  class="w-12 h-12 rounded-full object-cover border border-gray-300"
-                />
-
-                <div class="flex-1">
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="font-bold text-verso-dark text-sm"
-                      >Harleen Quinzel</span
-                    >
-                    <span class="text-xs text-gray-500 font-medium"
-                      >11:22 PM</span
-                    >
-                  </div>
-                  <p class="text-xs text-verso-dark font-bold uppercase">
-                    AMAZING!!
-                  </p>
-                </div>
-              </div>
+              {{ book.description }}
             </div>
           </div>
+        </div>
+
+        <div v-else class="text-center py-20 text-gray-500">
+          Book not found.
         </div>
       </main>
     </div>
@@ -151,7 +124,7 @@ fullContent:
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import bookService from "@/services/bookService";
 import Sidebar from "@/components/layout/Sidebar.vue";
@@ -172,12 +145,6 @@ const router = useRouter();
 const book = ref(null);
 const loading = ref(true);
 
-const bookDescription = computed(() => {
-  if (!book.value) return "";
-  // Return fixed text to match image for visual fidelity, or fallback to real desc
-  return "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
-});
-
 const goBack = () => {
   if (window.history.state && window.history.state.back) {
     router.back();
@@ -188,7 +155,8 @@ const goBack = () => {
 
 const startReading = () => {
   if (book.value) {
-    router.push(`/read/${book.value.id || route.params.id}`);
+    // Assuming backend will eventually provide a 'content_path' or similar ID for the reader
+    router.push(`/read/${book.value.id}`);
   }
 };
 
@@ -198,14 +166,10 @@ onMounted(async () => {
     loading.value = true;
     const fetchedBook = await bookService.getBookDetails(bookId);
 
-    // Merge real data with mock data to match the UI EXACTLY
-    book.value = {
-      ...fetchedBook,
-      title: fetchedBook.title || "Think Again", // Fallback for specific look
-      rating: 4,
-      author_mock: "Dong Vu", // Specific mock from image
-      cover_i: fetchedBook.cover_i, // Keep real cover if available
-    };
+    // Assign directly. No more mock data merging.
+    if (fetchedBook) {
+      book.value = fetchedBook;
+    }
   } catch (e) {
     console.error("Failed to load book", e);
   } finally {
@@ -213,4 +177,3 @@ onMounted(async () => {
   }
 });
 </script>
-}

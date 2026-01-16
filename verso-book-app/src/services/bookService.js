@@ -1,13 +1,13 @@
 import api from "./api";
 
 export default {
-  // Fetch books from your Laravel Backend
+  // Fetch list of books
   async getBooks(type = "latest", limit = 10) {
     try {
-      // Passes 'type' (e.g., 'classic', 'business') to Laravel
       const response = await api.get("/books", {
         params: { type, limit },
       });
+      // Laravel response()->json(...) returns the array directly in data
       return response.data;
     } catch (error) {
       console.error("Failed to fetch books:", error);
@@ -15,6 +15,7 @@ export default {
     }
   },
 
+  // Fetch single book details
   async getBookDetails(id) {
     try {
       const response = await api.get(`/books/${id}`);
