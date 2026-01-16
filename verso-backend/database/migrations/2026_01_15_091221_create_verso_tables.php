@@ -25,12 +25,13 @@ return new class extends Migration
         Schema::create('books', function (Blueprint $table) {
             $table->id('book_id');
             $table->string('title');
-            $table->string('content_path')->nullable(); // PDF/Epub file path
-            $table->string('cover_image')->nullable(); // Added for UI
-            $table->string('author_name')->nullable(); // Cached author name
+            $table->text('description')->nullable(); // <--- ADD THIS LINE
+            $table->string('content_path')->nullable();
+            $table->string('cover_image')->nullable();
+            $table->string('author_name')->nullable(); 
             $table->date('publication_date')->nullable();
-            $table->string('category')->nullable(); // For filtering (Latest, Exclusive, etc.)
-            $table->float('rating_avg')->default(0); // For "Highly Rated"
+            $table->string('category')->nullable(); 
+            $table->float('rating_avg')->default(0); 
             $table->timestamps();
         });
 

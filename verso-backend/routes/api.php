@@ -5,8 +5,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
-use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\ProfileController;
+// use App\Http\Controllers\CommunityController; // COMMENT THIS OUT
 
 // --- Public Routes ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -31,9 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Events
     Route::get('/events', [EventController::class, 'index']);
 
-    // // Community / Chat
+    // Community Routes - Commented out until Controller is created
     // Route::get('/community/channels', [CommunityController::class, 'getChannels']);
-    // Route::get('/community/channels/{id}/messages', [CommunityController::class, 'getMessages']);
-    // Route::post('/community/channels/{id}/messages', [CommunityController::class, 'sendMessage']);
-    // Route::get('/community/users', [CommunityController::class, 'getOnlineUsers']);
+    // ...
 });

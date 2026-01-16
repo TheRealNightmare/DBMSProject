@@ -47,15 +47,14 @@ class BookController extends Controller
     }
 
     public function show($id) {
-        $book = Book::findOrFail($id);
-        // Match expected Detail View format
-        return response()->json([
-            'id' => $book->book_id,
-            'title' => $book->title,
-            'description' => 'Description placeholder...', // Add description col to DB if needed
-            'image' => $book->cover_image,
-            'authors' => [['name' => $book->author_name]],
-            'rating' => $book->rating_avg
-        ]);
-    }
+    $book = Book::findOrFail($id);
+    return response()->json([
+        'id' => $book->book_id,
+        'title' => $book->title,
+        'description' => $book->description ?? 'No description available.', // Use real column
+        'image' => $book->cover_image,
+        'authors' => [['name' => $book->author_name]],
+        'rating' => $book->rating_avg
+    ]);
+}
 }
