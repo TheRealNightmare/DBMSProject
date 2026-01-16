@@ -36,7 +36,14 @@
       </div>
 
       <form @submit.prevent="handleLogin" class="space-y-5">
-        <BaseInput v-model="form.email" label="Email" placeholder="" />
+        <div
+          v-if="errorMessage"
+          class="p-3 text-sm text-red-600 bg-red-50 rounded-lg"
+        >
+          {{ errorMessage }}
+        </div>
+
+        <BaseInput v-model="form.email" label="Email" type="email" />
         <BaseInput v-model="form.password" label="Password" type="password" />
 
         <div class="flex justify-between items-center text-sm mt-2">
@@ -59,9 +66,10 @@
 
         <div class="pt-2">
           <BaseButton
+            :disabled="isLoading"
             class="w-full shadow-lg shadow-verso-blue/30 py-3.5 text-lg"
           >
-            Start your Journey
+            {{ isLoading ? "Logging in..." : "Start your Journey" }}
           </BaseButton>
         </div>
       </form>
@@ -70,38 +78,36 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue"; // Added ref for error handling
+import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import BaseInput from "@/components/ui/BaseInput.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
-import api from "@/services/api"; // Import the API client
+import api from "@/services/api";
 
 const router = useRouter();
-const form = reactive({ email: "", password: "" });
+const isLoading = ref(false);
 const errorMessage = ref("");
+const form = reactive({ email: "", password: "" });
 
 const handleLogin = async () => {
-  errorMessage.value = ""; // Reset error
+  errorMessage.value = "";
+  isLoading.value = true;
+
   try {
-    // Call the login endpoint defined in api.php
     const response = await api.post("/login", {
       email: form.email,
       password: form.password,
     });
 
-    // Store the token from the response
     localStorage.setItem("auth_token", response.data.token);
-
-    // Optional: Store user info
     localStorage.setItem("user", JSON.stringify(response.data.user));
 
-    console.log("Login successful");
-    router.push("/"); // Redirect to home/dashboard
+    router.push("/");
   } catch (error) {
-    console.error("Login failed:", error);
     errorMessage.value =
-      error.response?.data?.message ||
-      "Login failed. Please check your credentials.";
+      error.response?.data?.message || "Invalid credentials.";
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>

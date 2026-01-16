@@ -37,6 +37,13 @@
       </div>
 
       <form @submit.prevent="handleRegister" class="space-y-4">
+        <div
+          v-if="errorMessage"
+          class="p-3 text-sm text-red-600 bg-red-50 rounded-lg"
+        >
+          {{ errorMessage }}
+        </div>
+
         <BaseInput
           v-model="form.username"
           label="Username"
@@ -46,6 +53,7 @@
           v-model="form.email"
           label="Email"
           placeholder="Enter your email"
+          type="email"
         />
         <BaseInput v-model="form.password" label="Password" type="password" />
         <BaseInput
@@ -56,9 +64,10 @@
 
         <div class="pt-4">
           <BaseButton
+            :disabled="isLoading"
             class="w-full shadow-lg shadow-verso-blue/30 py-3.5 text-lg"
           >
-            Sign Up
+            {{ isLoading ? "Creating Account..." : "Sign Up" }}
           </BaseButton>
         </div>
 
@@ -67,9 +76,8 @@
           <router-link
             to="/login"
             class="text-verso-blue font-bold hover:underline"
+            >Log in</router-link
           >
-            Log in
-          </router-link>
         </p>
       </form>
     </div>
@@ -84,41 +92,44 @@ import BaseButton from "@/components/ui/BaseButton.vue";
 import api from "@/services/api";
 
 const router = useRouter();
+const isLoading = ref(false);
+const errorMessage = ref("");
 const form = reactive({
   username: "",
   email: "",
   password: "",
   confirmPassword: "",
 });
-const errorMessage = ref("");
 
 const handleRegister = async () => {
   errorMessage.value = "";
+  isLoading.value = true;
+
   try {
-    // Call the register endpoint
     const response = await api.post("/register", {
       username: form.username,
       email: form.email,
       password: form.password,
-      // Map 'confirmPassword' to 'password_confirmation' for Laravel validation
-      password_confirmation: form.confirmPassword,
+      password_confirmation: form.confirmPassword, // Laravel requires this field name
     });
 
-    // Store token immediately to log them in
+    // Store token and redirect
     localStorage.setItem("auth_token", response.data.token);
+    localStorage.setItem("user", JSON.stringify(response.data.user));
 
-    console.log("Registration successful");
     router.push("/");
   } catch (error) {
-    console.error("Registration failed:", error);
-    // Display validation errors if available
     if (error.response?.data?.errors) {
+      // Join Laravel validation errors into a string
       errorMessage.value = Object.values(error.response.data.errors)
         .flat()
-        .join(", ");
+        .join(" ");
     } else {
-      errorMessage.value = "Registration failed. Please try again.";
+      errorMessage.value =
+        error.response?.data?.message || "Registration failed.";
     }
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>

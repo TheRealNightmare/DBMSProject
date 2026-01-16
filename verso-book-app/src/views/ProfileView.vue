@@ -19,8 +19,8 @@
                 >Email</label
               >
               <input
+                v-model="user.email"
                 type="text"
-                value="spoider.man@example.com"
                 class="w-full bg-transparent border-none outline-none text-verso-dark font-medium p-0"
               />
             </div>
@@ -29,24 +29,11 @@
               class="border-2 border-verso-blue/50 rounded-2xl px-5 py-3 bg-transparent"
             >
               <label class="block text-verso-dark font-extrabold text-sm mb-1"
-                >Password</label
+                >Username</label
               >
               <input
-                type="password"
-                value="000000000"
-                class="w-full bg-transparent border-none outline-none text-verso-dark font-medium p-0"
-              />
-            </div>
-
-            <div
-              class="border-2 border-verso-blue/50 rounded-2xl px-5 py-3 bg-transparent"
-            >
-              <label class="block text-verso-dark font-extrabold text-sm mb-1"
-                >Fullname</label
-              >
-              <input
+                v-model="user.username"
                 type="text"
-                value="Peter Parker"
                 class="w-full bg-transparent border-none outline-none text-verso-dark font-medium p-0"
               />
             </div>
@@ -58,28 +45,15 @@
                 <div class="w-full">
                   <label
                     class="block text-verso-dark font-extrabold text-sm mb-1"
-                    >date of birth</label
+                    >Date of Birth</label
                   >
                   <input
                     type="text"
-                    value="01/01/1900"
+                    value="01/01/2000"
                     class="w-full bg-transparent border-none outline-none text-verso-dark font-medium p-0"
                   />
                 </div>
                 <Calendar class="w-6 h-6 text-verso-dark/70 shrink-0 ml-2" />
-              </div>
-
-              <div
-                class="w-1/3 min-w-[120px] border-2 border-verso-blue/50 rounded-2xl px-5 py-3 bg-transparent flex justify-between items-center relative cursor-pointer"
-              >
-                <div class="w-full">
-                  <label
-                    class="block text-verso-dark font-extrabold text-sm mb-1"
-                    >Gender</label
-                  >
-                  <div class="text-verso-dark font-medium">Male</div>
-                </div>
-                <ChevronDown class="w-6 h-6 text-verso-dark/70 shrink-0 ml-2" />
               </div>
             </div>
 
@@ -87,7 +61,7 @@
               <button
                 class="bg-verso-blue text-white font-bold py-3 px-10 rounded-xl shadow-md hover:opacity-90 transition"
               >
-                Confirm
+                Confirm Changes
               </button>
             </div>
           </div>
@@ -97,10 +71,12 @@
               class="w-64 h-64 rounded-full overflow-hidden border-4 border-white shadow-lg relative bg-gray-200"
             >
               <img
-                src="https://i.pinimg.com/736x/8f/c3/7b/8fc37b74b608a622588fbaa361485f32.jpg"
-                alt="Spider Worm"
+                :src="
+                  user.profile_image ||
+                  'https://placehold.co/300x300?text=Avatar'
+                "
+                alt="User Avatar"
                 class="w-full h-full object-cover"
-                onerror="this.src='https://placehold.co/300x300?text=Avatar'"
               />
             </div>
 
@@ -111,9 +87,10 @@
             </button>
 
             <button
-              class="bg-verso-blue text-white font-bold py-2.5 px-8 rounded-lg shadow-md hover:opacity-90 transition min-w-[160px]"
+              @click="handleLogout"
+              class="bg-red-500 text-white font-bold py-2.5 px-8 rounded-lg shadow-md hover:opacity-90 transition min-w-[160px]"
             >
-              log out
+              Log out
             </button>
           </div>
         </div>
@@ -127,9 +104,47 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import api from "@/services/api";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Navbar from "@/components/layout/Navbar.vue";
 import Footer from "@/components/layout/Footer.vue";
 import BottomNav from "@/components/layout/BottomNav.vue";
-import { Calendar, ChevronDown } from "lucide-vue-next";
+import { Calendar } from "lucide-vue-next";
+
+const router = useRouter();
+const user = ref({
+  username: "Loading...",
+  email: "Loading...",
+  profile_image: null,
+});
+
+// Fetch user data on mount
+onMounted(async () => {
+  try {
+    const response = await api.get("/profile");
+    user.value = response.data;
+  } catch (error) {
+    console.error("Failed to load profile", error);
+    // If unauthorized, redirect to login
+    if (error.response?.status === 401) router.push("/login");
+  }
+});
+
+const handleLogout = async () => {
+  try {
+    // 1. Call API to invalidate token on server
+    await api.post("/logout");
+  } catch (error) {
+    console.warn("Logout API call failed, but clearing local state anyway.");
+  } finally {
+    // 2. Clear local storage
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user");
+
+    // 3. Redirect to login
+    router.push("/login");
+  }
+};
 </script>

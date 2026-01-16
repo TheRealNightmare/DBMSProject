@@ -21,14 +21,15 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        // Create default shelves for new user
-        $user->shelves()->createMany([
-            ['name' => 'History', 'is_system_default' => true],
-            ['name' => 'Favorites', 'is_system_default' => true],
-            ['name' => 'Storage', 'is_system_default' => true],
-        ]);
+        // NOTE: Default shelves creation removed as requested.
 
-        return response()->json(['token' => $user->createToken('auth_token')->plainTextToken]);
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Registration successful',
+            'token' => $token,
+            'user' => $user
+        ], 201);
     }
 
     public function login(Request $request) {
@@ -37,6 +38,19 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $request['email'])->firstOrFail();
-        return response()->json(['token' => $user->createToken('auth_token')->plainTextToken, 'user' => $user]);
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login successful',
+            'token' => $token, 
+            'user' => $user
+        ]);
+    }
+
+    public function logout(Request $request) {
+        // Revoke the token that was used to authenticate the current request
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json(['message' => 'Logged out successfully']);
     }
 }
