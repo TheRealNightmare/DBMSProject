@@ -56,6 +56,7 @@
               </button>
 
               <div
+                v-if="onlineUsers.length > 0"
                 class="px-3 py-2 mt-4 text-xs font-bold text-gray-400 uppercase tracking-wider"
               >
                 Online Members
@@ -88,7 +89,12 @@
               <div class="flex items-center gap-2">
                 <span class="text-2xl text-gray-400">#</span>
                 <div>
-                  <h3 class="font-bold text-verso-dark">General Discussion</h3>
+                  <h3 class="font-bold text-verso-dark">
+                    {{
+                      channels.find((c) => c.id === activeChannel)?.name ||
+                      "Select a Channel"
+                    }}
+                  </h3>
                   <p class="text-xs text-gray-500">1,240 members • 32 online</p>
                 </div>
               </div>
@@ -149,17 +155,26 @@
                 <button class="text-gray-400 hover:text-verso-blue transition">
                   <Plus class="w-5 h-5" />
                 </button>
+
                 <input
+                  v-model="newMessage"
                   type="text"
-                  placeholder="Message #General Discussion..."
+                  :placeholder="`Message #${
+                    channels.find((c) => c.id === activeChannel)?.name ||
+                    'Channel'
+                  }...`"
                   class="flex-1 bg-transparent border-none focus:outline-none text-verso-dark placeholder-gray-400 py-2"
                   @keyup.enter="sendMessage"
                 />
+
                 <button class="text-gray-400 hover:text-verso-blue transition">
                   <Smile class="w-5 h-5" />
                 </button>
+
                 <button
+                  @click="sendMessage"
                   class="bg-verso-blue text-white p-2 rounded-lg hover:opacity-90 transition shadow-sm"
+                  :disabled="!newMessage.trim()"
                 >
                   <Send class="w-4 h-4" />
                 </button>
@@ -177,80 +192,151 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Navbar from "@/components/layout/Navbar.vue";
 import BottomNav from "@/components/layout/BottomNav.vue";
 import { Send, Plus, Smile } from "lucide-vue-next";
+import api from "@/services/api";
+import createEcho from "@/services/echo";
 
-const activeChannel = ref(1);
+// State
+const activeChannel = ref(null);
+const channels = ref([]);
+const messages = ref([]);
+const newMessage = ref("");
+const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+const onlineUsers = ref([]);
 
-// Mock Data
-const channels = ref([
-  { id: 1, name: "General Discussion", unread: 0 },
-  { id: 2, name: "Book Recommendations", unread: 3 },
-  { id: 3, name: "Sci-Fi & Fantasy", unread: 0 },
-  { id: 4, name: "Writers Corner", unread: 12 },
-  { id: 5, name: "Announcements", unread: 0 },
-]);
+let echoInstance = null;
 
-const onlineUsers = ref([
-  { id: 1, name: "Peter Parker", PJ: "https://placehold.co/100x100" },
-  { id: 2, name: "Harleen Quinzel", avatar: "https://placehold.co/100x100" },
-  { id: 3, name: "Bruce Wayne", avatar: "https://placehold.co/100x100" },
-]);
+// Lifecycle: Initialize
+onMounted(async () => {
+  await fetchGroups();
 
-const messages = ref([
-  {
-    id: 1,
-    sender: "Harleen Quinzel",
-    avatar: "https://placehold.co/100x100",
-    text: "Has anyone finished 'Think Again' yet? That ending completely blew my mind! 🤯",
-    time: "10:30 AM",
-    isMe: false,
-  },
-  {
-    id: 2,
-    sender: "Peter Parker",
-    avatar: "https://placehold.co/100x100",
-    text: "I'm about halfway through! Please no spoilers, I'm loving the character development so far.",
-    time: "10:32 AM",
-    isMe: true,
-  },
-  {
-    id: 3,
-    sender: "Bruce Wayne",
-    avatar: "https://placehold.co/100x100",
-    text: "It's definitely one of the best books released this year. The philosophical themes are quite deep.",
-    time: "10:35 AM",
-    isMe: false,
-  },
-  {
-    id: 4,
-    sender: "Harleen Quinzel",
-    avatar: "https://placehold.co/100x100",
-    text: "Exactly! I love how it challenges your perspective on logical fallacies.",
-    time: "10:36 AM",
-    isMe: false,
-  },
-]);
+  // Initialize Echo
+  echoInstance = createEcho();
 
-const sendMessage = (e) => {
-  const text = e.target.value;
-  if (!text) return;
+  // Select first channel by default if available
+  if (channels.value.length > 0) {
+    activeChannel.value = channels.value[0].id;
+  }
+});
 
-  messages.value.push({
-    id: Date.now(),
-    sender: "Peter Parker",
-    avatar: "https://placehold.co/100x100",
-    text: text,
-    time: new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-    isMe: true,
+// Lifecycle: Cleanup
+onUnmounted(() => {
+  if (echoInstance) {
+    echoInstance.disconnect();
+  }
+});
+
+// Watcher: Switch Channels & Subscribe
+watch(activeChannel, (newId, oldId) => {
+  if (oldId && echoInstance) {
+    echoInstance.leave(`community.${oldId}`);
+  }
+
+  if (newId) {
+    fetchMessages(newId);
+    subscribeToChannel(newId);
+  }
+});
+
+// --- API Actions ---
+
+const fetchGroups = async () => {
+  try {
+    const response = await api.get("/community/groups");
+    // Map backend groups to frontend structure
+    channels.value = response.data.map((g) => ({
+      id: g.group_id,
+      name: g.name,
+      unread: 0,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch groups:", error);
+  }
+};
+
+const fetchMessages = async (groupId) => {
+  try {
+    const response = await api.get(`/community/groups/${groupId}/messages`);
+    messages.value = response.data.map(transformMessage);
+    scrollToBottom();
+  } catch (error) {
+    console.error("Failed to fetch messages:", error);
+  }
+};
+
+const sendMessage = async () => {
+  if (!newMessage.value.trim()) return;
+
+  const tempText = newMessage.value;
+  newMessage.value = ""; // Clear input immediately for UX
+
+  try {
+    await api.post(`/community/groups/${activeChannel.value}/messages`, {
+      message: tempText,
+    });
+    // The socket event will handle adding the message to the UI
+  } catch (error) {
+    console.error("Failed to send message:", error);
+    alert("Message failed to send.");
+  }
+};
+
+// --- Real-time Logic ---
+
+const subscribeToChannel = (groupId) => {
+  if (!echoInstance) return;
+
+  console.log(`Subscribing to community.${groupId}...`);
+
+  echoInstance.private(`community.${groupId}`).listen("MessageSent", (e) => {
+    console.log("Event received:", e);
+
+    // Transform the incoming event payload to match our UI
+    const incomingMsg = {
+      id: e.message_id,
+      sender: e.sender.username,
+      avatar: e.sender.profile_image || "https://placehold.co/100x100",
+      text: e.message_body,
+      time: formatTime(e.sent_at),
+      isMe: e.sender.user_id === currentUser.user_id,
+    };
+
+    messages.value.push(incomingMsg);
+    scrollToBottom();
   });
+};
 
-  e.target.value = "";
+// --- Helpers ---
+
+const transformMessage = (msg) => {
+  return {
+    id: msg.message_id,
+    sender: msg.sender?.username || "Unknown",
+    avatar: msg.sender?.profile_image || "https://placehold.co/100x100",
+    text: msg.message_body,
+    time: formatTime(msg.sent_at),
+    isMe: msg.sender_id === currentUser.user_id,
+  };
+};
+
+const formatTime = (isoString) => {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    const container = document.querySelector(
+      ".overflow-y-auto.bg-gray-50\\/50"
+    );
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  });
 };
 </script>
