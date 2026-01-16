@@ -22,15 +22,15 @@
             <img
               src="https://placehold.co/100x100"
               class="h-10 w-10 rounded-full object-cover border-2 border-green-700"
-              alt="Mister User"
+              :alt="username"
             />
             <div
               class="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-verso-cream"
             ></div>
           </div>
-          <span class="font-bold text-sm text-verso-dark hidden md:block"
-            >Mister User</span
-          >
+          <span class="font-bold text-sm text-verso-dark hidden md:block">{{
+            username
+          }}</span>
         </router-link>
 
         <button class="text-gray-500 hover:text-verso-dark relative">
@@ -46,4 +46,19 @@
 
 <script setup>
 import { Search, Bell } from "lucide-vue-next";
+import { ref, onMounted } from "vue";
+
+const username = ref("Mister User");
+
+onMounted(() => {
+  const userStr = localStorage.getItem("user");
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      username.value = user.username || user.name || "Mister User";
+    } catch (e) {
+      console.error("Error parsing user data");
+    }
+  }
+});
 </script>

@@ -19,6 +19,8 @@ const StorageView = () => import("../views/StorageView.vue");
 
 const routes = [
   // Auth Pages
+  // Redirect root to login
+  { path: "/", redirect: "/login" },
   { path: "/login", component: LoginView },
   { path: "/register", component: RegisterView },
   { path: "/forgot-password", component: ForgotPassword },
@@ -26,9 +28,10 @@ const routes = [
   { path: "/reset-password", component: ResetPassword },
 
   // App Pages (Protected)
-  { path: "/", component: HomeView },
+  // Renamed or moved HomeView if needed, or just keep it accessible via /home if you want to preserve it
+  { path: "/home", component: HomeView },
   { path: "/dashboard", component: DashboardView },
-  { path: "/events", component: EventView }, // New Event Route
+  { path: "/events", component: EventView },
   { path: "/book/:id", component: BookDetailView },
   { path: "/read/:id", component: ReaderView },
   { path: "/profile", component: ProfileView },

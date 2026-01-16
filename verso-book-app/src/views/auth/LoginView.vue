@@ -73,6 +73,16 @@
           </BaseButton>
         </div>
       </form>
+
+      <p class="text-center text-sm text-gray-600 mt-4">
+        Don't have an account?
+        <router-link
+          to="/register"
+          class="text-verso-blue font-bold hover:underline"
+        >
+          Sign up
+        </router-link>
+      </p>
     </div>
   </div>
 </template>
@@ -102,7 +112,8 @@ const handleLogin = async () => {
     localStorage.setItem("auth_token", response.data.token);
     localStorage.setItem("user", JSON.stringify(response.data.user));
 
-    router.push("/");
+    // Redirect to dashboard (as requested in previous step)
+    router.push("/home");
   } catch (error) {
     errorMessage.value =
       error.response?.data?.message || "Invalid credentials.";

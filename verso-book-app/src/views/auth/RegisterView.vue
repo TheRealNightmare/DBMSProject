@@ -117,7 +117,7 @@ const handleRegister = async () => {
     localStorage.setItem("auth_token", response.data.token);
     localStorage.setItem("user", JSON.stringify(response.data.user));
 
-    router.push("/");
+    router.push("/home");
   } catch (error) {
     if (error.response?.data?.errors) {
       // Join Laravel validation errors into a string
