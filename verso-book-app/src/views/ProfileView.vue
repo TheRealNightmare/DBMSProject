@@ -1,150 +1,156 @@
-<template>
-  <div class="min-h-screen bg-verso-cream font-sans flex flex-col">
-    <Sidebar />
-
-    <div
-      class="md:ml-20 flex flex-col min-h-screen transition-all duration-300 relative"
-    >
-      <Navbar />
-
-      <main class="flex-1 flex items-center justify-center p-6 md:p-12">
-        <div
-          class="w-full max-w-5xl flex flex-col-reverse md:flex-row gap-16 md:gap-32 items-start justify-center mt-10"
-        >
-          <div class="flex-1 w-full max-w-md space-y-5">
-            <div
-              class="border-2 border-verso-blue/50 rounded-2xl px-5 py-3 bg-transparent"
-            >
-              <label class="block text-verso-dark font-extrabold text-sm mb-1"
-                >Email</label
-              >
-              <input
-                v-model="user.email"
-                type="text"
-                class="w-full bg-transparent border-none outline-none text-verso-dark font-medium p-0"
-              />
-            </div>
-
-            <div
-              class="border-2 border-verso-blue/50 rounded-2xl px-5 py-3 bg-transparent"
-            >
-              <label class="block text-verso-dark font-extrabold text-sm mb-1"
-                >Username</label
-              >
-              <input
-                v-model="user.username"
-                type="text"
-                class="w-full bg-transparent border-none outline-none text-verso-dark font-medium p-0"
-              />
-            </div>
-
-            <div class="flex gap-4">
-              <div
-                class="flex-1 border-2 border-verso-blue/50 rounded-2xl px-5 py-3 bg-transparent flex justify-between items-center relative"
-              >
-                <div class="w-full">
-                  <label
-                    class="block text-verso-dark font-extrabold text-sm mb-1"
-                    >Date of Birth</label
-                  >
-                  <input
-                    type="text"
-                    value="01/01/2000"
-                    class="w-full bg-transparent border-none outline-none text-verso-dark font-medium p-0"
-                  />
-                </div>
-                <Calendar class="w-6 h-6 text-verso-dark/70 shrink-0 ml-2" />
-              </div>
-            </div>
-
-            <div class="pt-4">
-              <button
-                class="bg-verso-blue text-white font-bold py-3 px-10 rounded-xl shadow-md hover:opacity-90 transition"
-              >
-                Confirm Changes
-              </button>
-            </div>
-          </div>
-
-          <div class="flex flex-col items-center gap-6">
-            <div
-              class="w-64 h-64 rounded-full overflow-hidden border-4 border-white shadow-lg relative bg-gray-200"
-            >
-              <img
-                :src="
-                  user.profile_image ||
-                  'https://placehold.co/300x300?text=Avatar'
-                "
-                alt="User Avatar"
-                class="w-full h-full object-cover"
-              />
-            </div>
-
-            <button
-              class="bg-verso-blue text-white font-bold py-2.5 px-8 rounded-lg shadow-md hover:opacity-90 transition min-w-[160px]"
-            >
-              Change Photo
-            </button>
-
-            <button
-              @click="handleLogout"
-              class="bg-red-500 text-white font-bold py-2.5 px-8 rounded-lg shadow-md hover:opacity-90 transition min-w-[160px]"
-            >
-              Log out
-            </button>
-          </div>
-        </div>
-      </main>
-    </div>
-    <Footer class="relative z-50" />
-    <div class="md:hidden">
-      <BottomNav active="profile" />
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
 import api from "@/services/api";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Navbar from "@/components/layout/Navbar.vue";
-import Footer from "@/components/layout/Footer.vue";
-import BottomNav from "@/components/layout/BottomNav.vue";
-import { Calendar } from "lucide-vue-next";
+import BaseInput from "@/components/ui/BaseInput.vue";
+import BaseButton from "@/components/ui/BaseButton.vue";
 
-const router = useRouter();
-const user = ref({
-  username: "Loading...",
-  email: "Loading...",
-  profile_image: null,
+const loading = ref(false);
+const previewImage = ref(null);
+const file = ref(null);
+
+const form = ref({
+  username: "",
+  email: "",
+  bio: "",
 });
 
-// Fetch user data on mount
+// Load current profile data
 onMounted(async () => {
   try {
-    const response = await api.get("/profile");
-    user.value = response.data;
-  } catch (error) {
-    console.error("Failed to load profile", error);
-    // If unauthorized, redirect to login
-    if (error.response?.status === 401) router.push("/login");
+    const { data } = await api.get("/profile");
+    form.value.username = data.username;
+    form.value.email = data.email;
+    form.value.bio = data.bio;
+
+    // Construct full image URL if path exists
+    if (data.profile_image) {
+      // Assuming backend runs on localhost:8000 and you ran 'php artisan storage:link'
+      previewImage.value = `http://localhost:8000/storage/${data.profile_image}`;
+    }
+  } catch (e) {
+    console.error("Failed to load profile", e);
   }
 });
 
-const handleLogout = async () => {
-  try {
-    // 1. Call API to invalidate token on server
-    await api.post("/logout");
-  } catch (error) {
-    console.warn("Logout API call failed, but clearing local state anyway.");
-  } finally {
-    // 2. Clear local storage
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("user");
+// Handle file selection
+const handleFileChange = (event) => {
+  const selected = event.target.files[0];
+  if (selected) {
+    file.value = selected;
+    // Create local preview URL
+    previewImage.value = URL.createObjectURL(selected);
+  }
+};
 
-    // 3. Redirect to login
-    router.push("/login");
+const handleUpdate = async () => {
+  loading.value = true;
+  try {
+    // We must use FormData for file uploads
+    const formData = new FormData();
+    formData.append("username", form.value.username);
+    formData.append("email", form.value.email);
+    formData.append("bio", form.value.bio || "");
+
+    if (file.value) {
+      formData.append("profile_image", file.value);
+    }
+
+    await api.post("/profile", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    alert("Profile updated successfully!");
+  } catch (e) {
+    console.error("Failed to update profile", e);
+    if (e.response && e.response.data.errors) {
+      alert(Object.values(e.response.data.errors).flat().join("\n"));
+    } else {
+      alert("Error updating profile.");
+    }
+  } finally {
+    loading.value = false;
   }
 };
 </script>
+
+<template>
+  <div class="flex h-screen bg-verso-cream">
+    <Sidebar />
+    <div class="flex-1 flex flex-col overflow-hidden relative">
+      <Navbar />
+      <main class="flex-1 overflow-x-hidden overflow-y-auto w-full p-6">
+        <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-8">
+          <h1 class="text-2xl font-bold text-verso-dark mb-6">Edit Profile</h1>
+
+          <form @submit.prevent="handleUpdate" class="space-y-6">
+            <div class="flex flex-col items-center space-y-4">
+              <div
+                class="w-32 h-32 rounded-full overflow-hidden border-4 border-verso-cream bg-gray-100"
+              >
+                <img
+                  v-if="previewImage"
+                  :src="previewImage"
+                  alt="Profile Preview"
+                  class="w-full h-full object-cover"
+                />
+                <div
+                  v-else
+                  class="w-full h-full flex items-center justify-center text-gray-400"
+                >
+                  <span>No Img</span>
+                </div>
+              </div>
+
+              <label
+                class="cursor-pointer bg-verso-blue text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition"
+              >
+                <span>Upload New Picture</span>
+                <input
+                  type="file"
+                  class="hidden"
+                  @change="handleFileChange"
+                  accept="image/*"
+                />
+              </label>
+            </div>
+
+            <BaseInput
+              v-model="form.username"
+              label="Username"
+              placeholder="Your username"
+              required
+            />
+
+            <BaseInput
+              v-model="form.email"
+              label="Email Address"
+              type="email"
+              placeholder="john@example.com"
+              required
+            />
+
+            <div class="w-full">
+              <label class="block text-sm font-medium text-gray-700 mb-1"
+                >Bio</label
+              >
+              <textarea
+                v-model="form.bio"
+                class="w-full rounded-xl border border-gray-300 shadow-sm p-3 focus:ring-2 focus:ring-verso-blue focus:border-transparent outline-none transition"
+                rows="3"
+                placeholder="Tell us about yourself..."
+              ></textarea>
+            </div>
+
+            <div class="pt-4">
+              <BaseButton type="submit" :disabled="loading">
+                {{ loading ? "Saving..." : "Save Changes" }}
+              </BaseButton>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+</template>

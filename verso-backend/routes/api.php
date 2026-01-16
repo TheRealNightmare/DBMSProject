@@ -28,12 +28,13 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Profile
     Route::get('/profile', [ProfileController::class, 'show']);
-    Route::put('/profile', [ProfileController::class, 'update']);
+    // Old: Route::put('/profile', [ProfileController::class, 'update']);
+    Route::post('/profile', [ProfileController::class, 'update']);
 
     // Events
     Route::get('/events', [EventController::class, 'index']);
     Route::post('/events', [EventController::class, 'store']);
-    
+
     // Community
     Route::get('/community/groups', [CommunityController::class, 'getGroups']);
     Route::get('/community/groups/{groupId}/messages', [CommunityController::class, 'getMessages']);

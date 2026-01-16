@@ -23,12 +23,13 @@ const handleCreate = async () => {
   loading.value = true;
   try {
     // Ensure date format matches backend expectations (YYYY-MM-DD HH:mm:ss)
-    // HTML datetime-local input returns 'YYYY-MM-DDTHH:mm', we replace T with space
+    // HTML datetime-local input returns 'YYYY-MM-DDTHH:mm'.
+    // We replace 'T' with a space AND append ':00' for seconds.
     const payload = {
       ...form.value,
-      start_time: form.value.start_time.replace("T", " "),
+      start_time: form.value.start_time.replace("T", " ") + ":00",
       end_time: form.value.end_time
-        ? form.value.end_time.replace("T", " ")
+        ? form.value.end_time.replace("T", " ") + ":00"
         : null,
     };
 
@@ -36,7 +37,17 @@ const handleCreate = async () => {
     router.push("/events");
   } catch (e) {
     console.error("Failed to create event", e);
-    alert("Error creating event. Please check your inputs.");
+
+    // [UPDATED] Better error handling for validation issues
+    if (e.response && e.response.status === 422) {
+      // Laravel sends validation errors in e.response.data.errors
+      const errors = e.response.data.errors;
+      // Flatten the errors object into a single string
+      const errorMessage = Object.values(errors).flat().join("\n");
+      alert("Validation Error:\n" + errorMessage);
+    } else {
+      alert("Error creating event. Please check console for details.");
+    }
   } finally {
     loading.value = false;
   }
