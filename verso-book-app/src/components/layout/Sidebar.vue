@@ -11,14 +11,6 @@
 
     <div class="flex flex-col gap-8 w-full items-center">
       <router-link
-        to="/dashboard"
-        class="p-3 rounded-xl transition text-gray-400"
-        active-class="text-white bg-verso-blue"
-      >
-        <LayoutGrid class="w-6 h-6" />
-      </router-link>
-
-      <router-link
         to="/home"
         class="p-3 rounded-xl transition text-gray-400"
         active-class="text-white bg-verso-blue"
@@ -40,6 +32,14 @@
         active-class="text-white bg-verso-blue"
       >
         <Download class="w-6 h-6" />
+      </router-link>
+
+      <router-link
+        to="/dashboard"
+        class="p-3 rounded-xl transition text-gray-400"
+        active-class="text-white bg-verso-blue"
+      >
+        <LayoutGrid class="w-6 h-6" />
       </router-link>
 
       <router-link

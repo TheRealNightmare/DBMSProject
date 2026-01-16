@@ -84,7 +84,7 @@
               >
                 <img
                   :src="msg.avatar"
-                  class="w-10 h-10 rounded-full object-cover shadow-sm mt-1"
+                  class="w-10 h-10 rounded-full object-cover shadow-sm mt-1 bg-gray-200"
                 />
 
                 <div
@@ -167,7 +167,8 @@ const activeChannel = ref(null);
 const channels = ref([]);
 const messages = ref([]);
 const newMessage = ref("");
-const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+// Use ref for currentUser so we can update it after fetching fresh data
+const currentUser = ref(JSON.parse(localStorage.getItem("user") || "{}"));
 const messagesContainer = ref(null);
 
 let echoInstance = null;
@@ -181,10 +182,18 @@ const currentChannelName = computed(() => {
 
 // Lifecycle
 onMounted(async () => {
+  // Fetch fresh user data to ensure ID and image are correct
+  try {
+    const { data } = await api.get("/profile");
+    currentUser.value = data;
+    localStorage.setItem("user", JSON.stringify(data));
+  } catch (e) {
+    console.error("Failed to fetch current user info", e);
+  }
+
   await fetchGroups();
   echoInstance = createEcho();
 
-  // If groups exist, select the first one automatically
   if (channels.value.length > 0) {
     activeChannel.value = channels.value[0].id;
   }
@@ -203,11 +212,18 @@ watch(activeChannel, (newId, oldId) => {
   }
 
   if (newId) {
-    messages.value = []; // Clear old messages immediately
+    messages.value = [];
     fetchMessages(newId);
     subscribeToChannel(newId);
   }
 });
+
+// Helper to construct full image URL
+const getAvatarUrl = (path) => {
+  if (!path) return "https://placehold.co/100x100";
+  if (path.startsWith("http")) return path;
+  return `http://localhost:8000/storage/${path}`;
+};
 
 // API Actions
 const fetchGroups = async () => {
@@ -236,7 +252,7 @@ const sendMessage = async () => {
   if (!newMessage.value.trim() || !activeChannel.value) return;
 
   const tempText = newMessage.value;
-  newMessage.value = ""; // Clear input immediately
+  newMessage.value = "";
 
   try {
     const response = await api.post(
@@ -246,7 +262,6 @@ const sendMessage = async () => {
       }
     );
 
-    // Fallback: Add message manually if socket is slow or fails
     const returnedMsg = response.data.message;
     if (!messages.value.some((m) => m.id === returnedMsg.message_id)) {
       messages.value.push(transformMessage(returnedMsg));
@@ -255,7 +270,7 @@ const sendMessage = async () => {
   } catch (error) {
     console.error("Failed to send message:", error);
     alert("Message failed to send.");
-    newMessage.value = tempText; // Restore text on error
+    newMessage.value = tempText;
   }
 };
 
@@ -264,17 +279,15 @@ const subscribeToChannel = (groupId) => {
   if (!echoInstance) return;
 
   echoInstance.private(`community.${groupId}`).listen("MessageSent", (e) => {
-    // Prevent duplicate if we added it manually via sendMessage
     if (messages.value.some((m) => m.id === e.message_id)) return;
 
     const incomingMsg = {
       id: e.message_id,
       sender: e.sender.username,
-      avatar: e.sender.profile_image || "https://placehold.co/100x100",
+      avatar: getAvatarUrl(e.sender.profile_image),
       text: e.message_body,
       time: formatTime(e.sent_at),
-      // Loose comparison (==) for string/int safety
-      isMe: e.sender.user_id == currentUser.user_id,
+      isMe: e.sender.user_id == currentUser.value.user_id,
     };
 
     messages.value.push(incomingMsg);
@@ -287,10 +300,10 @@ const transformMessage = (msg) => {
   return {
     id: msg.message_id,
     sender: msg.sender?.username || "Unknown",
-    avatar: msg.sender?.profile_image || "https://placehold.co/100x100",
+    avatar: getAvatarUrl(msg.sender?.profile_image),
     text: msg.message_body,
     time: formatTime(msg.sent_at),
-    isMe: msg.sender_id == currentUser.user_id,
+    isMe: msg.sender_id == currentUser.value.user_id,
   };
 };
 

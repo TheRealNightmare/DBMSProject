@@ -20,7 +20,7 @@
         <router-link to="/profile" class="flex items-center gap-3">
           <div class="relative">
             <img
-              src="https://placehold.co/100x100"
+              :src="profileImage"
               class="h-10 w-10 rounded-full object-cover border-2 border-green-700"
               :alt="username"
             />
@@ -47,18 +47,43 @@
 <script setup>
 import { Search, Bell } from "lucide-vue-next";
 import { ref, onMounted } from "vue";
+import api from "@/services/api";
 
 const username = ref("Mister User");
+const profileImage = ref("https://placehold.co/100x100");
 
-onMounted(() => {
+onMounted(async () => {
+  // 1. Initial load from localStorage (fast)
   const userStr = localStorage.getItem("user");
   if (userStr) {
     try {
       const user = JSON.parse(userStr);
       username.value = user.username || user.name || "Mister User";
+      if (user.profile_image) {
+        // Handle case where local storage might already have the path
+        profileImage.value = user.profile_image.startsWith("http")
+          ? user.profile_image
+          : `http://localhost:8000/storage/${user.profile_image}`;
+      }
     } catch (e) {
       console.error("Error parsing user data");
     }
+  }
+
+  // 2. Fetch fresh data from Database
+  try {
+    const { data } = await api.get("/profile");
+
+    username.value = data.username;
+
+    if (data.profile_image) {
+      profileImage.value = `http://localhost:8000/storage/${data.profile_image}`;
+    }
+
+    // Update localStorage to keep it fresh
+    localStorage.setItem("user", JSON.stringify(data));
+  } catch (e) {
+    console.error("Failed to fetch fresh profile data", e);
   }
 });
 </script>
