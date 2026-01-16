@@ -4,7 +4,7 @@
   >
     <div
       class="mb-12 cursor-pointer text-verso-dark"
-      @click="$router.push('/')"
+      @click="$router.push('/home')"
     >
       <BookOpen class="w-8 h-8" />
     </div>
@@ -19,7 +19,7 @@
       </router-link>
 
       <router-link
-        to="/"
+        to="/home"
         class="p-3 rounded-xl transition text-gray-400"
         active-class="text-white bg-verso-blue"
       >
