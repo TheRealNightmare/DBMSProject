@@ -86,6 +86,26 @@ return new class extends Migration
             $table->timestamp('end_time')->nullable();
             $table->timestamps();
         });
+
+        Schema::create('chapters', function (Blueprint $table) {
+            $table->id('chapter_id');
+            $table->foreignId('book_id')->constrained('books', 'book_id')->onDelete('cascade');
+            $table->string('title');
+            $table->longText('content'); // The actual text of the chapter
+            $table->integer('order_index'); // To know which is Chapter 1, 2, etc.
+            $table->timestamps();
+        });
+
+        Schema::create('annotations', function (Blueprint $table) {
+            $table->id('annotation_id');
+            $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->foreignId('book_id')->constrained('books', 'book_id')->onDelete('cascade');
+            $table->foreignId('chapter_id')->constrained('chapters', 'chapter_id')->onDelete('cascade');
+            $table->text('highlighted_text')->nullable(); // Text the user selected
+            $table->text('note'); // The user's comment
+            $table->string('color', 20)->default('yellow');
+            $table->timestamps();
+        });
     }
 
     /**

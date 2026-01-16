@@ -25,4 +25,23 @@ export default {
       return null;
     }
   },
+  async getChapterContent(bookId, chapterIndex) {
+    try {
+      const response = await api.get(`/books/${bookId}/read/${chapterIndex}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to load chapter", error);
+      throw error;
+    }
+  },
+
+  async saveAnnotation(bookId, data) {
+    try {
+      const response = await api.post(`/books/${bookId}/annotate`, data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to save annotation", error);
+      throw error;
+    }
+  },
 };

@@ -1,9 +1,11 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Annotation;
 use App\Models\Book;
+use App\Models\Chapter;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
 class BookController extends Controller
 {
     public function index(Request $request) {
@@ -55,6 +57,27 @@ class BookController extends Controller
         'image' => $book->cover_image,
         'authors' => [['name' => $book->author_name]],
         'rating' => $book->rating_avg
-    ]);
-}
+        ]);
+    }
+    public function getContent(Request $request, $bookId, $chapterIndex) {
+        $chapter = Chapter::where('book_id', $bookId)
+                          ->where('order_index', $chapterIndex)
+                          ->first();
+
+        if (!$chapter) {
+            return response()->json(['message' => 'Chapter not found'], 404);
+        }
+
+        // Also fetch user's annotations for this chapter
+        $annotations = Annotation::where('book_id', $bookId)
+                                 ->where('chapter_id', $chapter->chapter_id)
+                                 ->where('user_id', Auth::id())
+                                 ->get();
+
+        return response()->json([
+            'chapter' => $chapter,
+            'annotations' => $annotations,
+            'total_chapters' => Chapter::where('book_id', $bookId)->count()
+        ]);
+    }
 }

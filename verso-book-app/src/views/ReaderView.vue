@@ -16,7 +16,7 @@
         >
           <ChevronLeft class="w-5 h-5 mr-2" />
           <span class="text-lg line-clamp-1 max-w-[150px]">{{
-            book?.title || "Loading..."
+            bookTitle || "Loading..."
           }}</span>
         </button>
 
@@ -24,13 +24,8 @@
           <h2
             class="text-xl font-bold text-gray-500 uppercase tracking-widest mb-1 hidden md:block"
           >
-            Reading
+            {{ currentChapter?.title || "Reading" }}
           </h2>
-          <h1
-            class="text-xl md:text-3xl font-extrabold text-verso-dark truncate max-w-[300px] md:max-w-md"
-          >
-            {{ book?.title || "..." }}
-          </h1>
         </div>
 
         <div v-if="!showAnnotations" class="flex gap-4">
@@ -47,7 +42,9 @@
         class="flex-1 flex items-center relative px-4 md:px-16 overflow-hidden"
       >
         <button
-          class="p-2 text-verso-dark hover:text-verso-blue transition hidden md:block"
+          @click="prevChapter"
+          :disabled="pageIndex <= 1"
+          class="p-2 text-verso-dark hover:text-verso-blue transition hidden md:block disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronLeft class="w-10 h-10" />
         </button>
@@ -60,25 +57,20 @@
 
         <div
           v-else
-          class="flex-1 h-full max-w-6xl mx-auto overflow-y-auto no-scrollbar px-8 py-8"
+          class="flex-1 h-full max-w-4xl mx-auto overflow-y-auto px-8 py-8 bg-white/50 rounded-lg shadow-inner relative"
+          id="reader-container"
         >
           <div
-            class="text-justify text-verso-dark leading-loose text-lg font-serif h-full"
+            class="text-justify text-verso-dark leading-loose text-lg font-serif h-full whitespace-pre-line selection:bg-yellow-200 selection:text-black"
           >
-            <div v-if="book && book.description">
-              <p class="mb-8 whitespace-pre-line">{{ book.description }}</p>
-              <p class="mb-8 text-gray-400 italic text-center text-sm">
-                (Full book content not available in preview)
-              </p>
-            </div>
-            <div v-else class="text-center text-gray-500 mt-20">
-              Content not available.
-            </div>
+            {{ currentChapter?.content }}
           </div>
         </div>
 
         <button
-          class="p-2 text-verso-dark hover:text-verso-blue transition hidden md:block"
+          @click="nextChapter"
+          :disabled="pageIndex >= totalChapters"
+          class="p-2 text-verso-dark hover:text-verso-blue transition hidden md:block disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronRight class="w-10 h-10" />
         </button>
@@ -87,7 +79,7 @@
       <footer
         class="h-16 flex items-center justify-center font-extrabold text-verso-dark text-lg"
       >
-        1/1
+        {{ pageIndex }} / {{ totalChapters }}
       </footer>
     </div>
 
@@ -102,35 +94,48 @@
         >
           <StickyNote class="w-6 h-6" />
         </button>
+        <h3 class="font-extrabold text-verso-dark text-lg">Notes</h3>
+      </div>
+
+      <div class="px-6 mb-6">
+        <textarea
+          v-model="newNote"
+          placeholder="Select text on the left, then type here to save a note..."
+          class="w-full p-3 rounded-lg text-sm border-none focus:ring-2 focus:ring-verso-blue"
+          rows="3"
+        ></textarea>
         <button
-          class="p-2 hover:bg-white/20 rounded-lg transition text-verso-dark"
+          @click="saveNote"
+          :disabled="!newNote"
+          class="w-full mt-2 bg-verso-blue text-white py-2 rounded-lg text-sm font-bold hover:opacity-90 transition"
         >
-          <Bookmark class="w-6 h-6" />
-        </button>
-        <button
-          class="p-2 hover:bg-white/20 rounded-lg transition text-verso-dark"
-        >
-          <Edit3 class="w-6 h-6" />
+          Save Note
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto px-6">
-        <h3 class="font-extrabold text-verso-dark mb-8 text-center text-lg">
-          Annotations
-        </h3>
-
-        <div class="space-y-8">
+      <div class="flex-1 overflow-y-auto px-6 pb-6">
+        <div class="space-y-4">
           <div
             v-for="(note, i) in annotations"
             :key="i"
-            class="group cursor-pointer"
+            class="bg-white/60 p-4 rounded-lg shadow-sm"
           >
-            <h4 class="font-bold text-sm text-verso-dark leading-snug">
-              {{ note.chapter }}
-            </h4>
-            <p v-if="note.text" class="text-xs text-verso-dark/70 mt-1">
-              {{ note.text }}
+            <p
+              v-if="note.highlighted_text"
+              class="text-xs text-gray-500 italic mb-2 border-l-2 border-yellow-400 pl-2"
+            >
+              "{{ note.highlighted_text }}"
             </p>
+            <p class="text-sm text-verso-dark font-medium">{{ note.note }}</p>
+            <span class="text-[10px] text-gray-400 mt-2 block">{{
+              new Date(note.created_at).toLocaleDateString()
+            }}</span>
+          </div>
+          <div
+            v-if="annotations.length === 0"
+            class="text-center text-gray-500 text-sm mt-10"
+          >
+            No notes for this chapter yet.
           </div>
         </div>
       </div>
@@ -139,54 +144,103 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import bookService from "@/services/bookService";
 import Sidebar from "@/components/layout/Sidebar.vue";
-import {
-  ChevronLeft,
-  ChevronRight,
-  StickyNote,
-  Bookmark,
-  Edit3,
-} from "lucide-vue-next";
+import { ChevronLeft, ChevronRight, StickyNote } from "lucide-vue-next";
 
 const route = useRoute();
 const showAnnotations = ref(true);
-const loading = ref(true);
-const book = ref(null);
+const loading = ref(false);
+
+// State
+const bookTitle = ref("");
+const currentChapter = ref(null);
+const annotations = ref([]);
+const pageIndex = ref(1);
+const totalChapters = ref(1);
+const newNote = ref("");
+const bookId = route.params.id;
 
 const toggleSidebar = () => {
   showAnnotations.value = !showAnnotations.value;
 };
 
-// Mock Annotations (Keep these for UI demo until backend supports them)
-const annotations = ref([
-  { chapter: "Note 1", text: "Interesting concept here." },
-  { chapter: "Note 2", text: "Reference to earlier chapter." },
-]);
-
-onMounted(async () => {
+// Fetch Content
+const loadContent = async () => {
+  if (!bookId) return;
+  loading.value = true;
   try {
-    loading.value = true;
-    const bookId = route.params.id;
-    if (bookId) {
-      book.value = await bookService.getBookDetails(bookId);
-    }
+    // API call matches the backend structure we created
+    const data = await bookService.getChapterContent(bookId, pageIndex.value);
+    currentChapter.value = data.chapter;
+    bookTitle.value = data.chapter.title; // Or fetch book details separately
+    annotations.value = data.annotations;
+    totalChapters.value = data.total_chapters;
   } catch (e) {
-    console.error("Failed to load book content", e);
+    console.error("Error loading chapter", e);
   } finally {
     loading.value = false;
   }
+};
+
+// Pagination
+const nextChapter = () => {
+  if (pageIndex.value < totalChapters.value) {
+    pageIndex.value++;
+    loadContent();
+  }
+};
+
+const prevChapter = () => {
+  if (pageIndex.value > 1) {
+    pageIndex.value--;
+    loadContent();
+  }
+};
+
+// Annotation Logic
+const saveNote = async () => {
+  if (!newNote.value) return;
+
+  // Get selected text from the browser window
+  const selection = window.getSelection().toString();
+
+  try {
+    const saved = await bookService.saveAnnotation(bookId, {
+      chapter_id: currentChapter.value.chapter_id,
+      note: newNote.value,
+      highlighted_text: selection || null,
+      color: "yellow",
+    });
+
+    // Add to local list immediately
+    annotations.value.unshift(saved);
+    newNote.value = ""; // Clear input
+  } catch (e) {
+    alert("Failed to save note");
+  }
+};
+
+onMounted(() => {
+  loadContent();
 });
 </script>
 
 <style scoped>
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* Hides scrollbar for clean reading UI */
+::-webkit-scrollbar {
+  width: 8px;
 }
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 </style>

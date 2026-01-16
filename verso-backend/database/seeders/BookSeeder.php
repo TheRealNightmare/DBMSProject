@@ -15,10 +15,13 @@ class BookSeeder extends Seeder
     {
         $faker = Faker::create();
 
-        // 1. CLEAR EXISTING TABLE (Optional - remove if you want to keep adding)
-        // DB::table('books')->truncate(); 
+        // 1. CLEAR EXISTING TABLES
+        // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        // DB::table('chapters')->truncate();
+        // DB::table('books')->truncate();
+        // DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // 2. SEED FIXED "HIGH QUALITY" BOOKS (For Demo Consistency)
+        // 2. SEED FIXED "HIGH QUALITY" BOOKS
         $fixedBooks = [
             [
                 'title' => 'Think Again',
@@ -44,7 +47,7 @@ class BookSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-             [
+            [
                 'title' => 'Atomic Habits',
                 'description' => 'No matter your goals, Atomic Habits offers a proven framework for improving--every day.',
                 'author_name' => 'James Clear',
@@ -58,31 +61,57 @@ class BookSeeder extends Seeder
             ],
         ];
 
-        DB::table('books')->insert($fixedBooks);
+        // Insert fixed books and generate chapters for them
+        foreach ($fixedBooks as $bookData) {
+            $bookId = DB::table('books')->insertGetId($bookData);
+            $this->seedChapters($bookId, $faker);
+        }
 
         // 3. GENERATE 50 RANDOM BOOKS
         $categories = ['classic', 'business', 'exclusive', 'rated', 'science', 'history', 'romance'];
-        
-        $randomBooks = [];
+
         for ($i = 0; $i < 50; $i++) {
-            $randomBooks[] = [
+            $bookData = [
                 'title' => $faker->catchPhrase,
                 'description' => $faker->paragraph(3),
                 'author_name' => $faker->name,
-                // Random ID between 1M and 10M usually returns a valid book cover
                 'cover_image' => 'https://covers.openlibrary.org/b/id/' . $faker->numberBetween(1000000, 10000000) . '-L.jpg',
                 'category' => $faker->randomElement($categories),
-                'rating_avg' => $faker->randomFloat(1, 1, 5), // e.g., 3.5, 4.8
+                'rating_avg' => $faker->randomFloat(1, 1, 5),
                 'content_path' => 'mock_content_' . $i . '.pdf',
                 'publication_date' => $faker->date(),
                 'created_at' => $faker->dateTimeBetween('-2 years', 'now'),
                 'updated_at' => now(),
             ];
+
+            // Insert book and get ID
+            $bookId = DB::table('books')->insertGetId($bookData);
+            
+            // Generate chapters for this book
+            $this->seedChapters($bookId, $faker);
+        }
+    }
+
+    /**
+     * Helper to seed chapters for a specific book.
+     */
+    private function seedChapters($bookId, $faker)
+    {
+        $chapters = [];
+        // Generate 5 to 10 chapters per book
+        $chapterCount = rand(5, 10);
+
+        for ($c = 1; $c <= $chapterCount; $c++) {
+            $chapters[] = [
+                'book_id' => $bookId,
+                'title' => "Chapter $c: " . $faker->words(3, true),
+                'content' => $faker->paragraphs(rand(5, 15), true), // Rich text content
+                'order_index' => $c,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
         }
 
-        // Insert in chunks to be efficient
-        foreach (array_chunk($randomBooks, 25) as $chunk) {
-            DB::table('books')->insert($chunk);
-        }
+        DB::table('chapters')->insert($chapters);
     }
 }

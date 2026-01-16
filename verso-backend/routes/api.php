@@ -35,6 +35,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/events', [EventController::class, 'index']);
     Route::post('/events', [EventController::class, 'store']);
 
+    Route::get('/books/{id}/read/{chapter}', [BookController::class, 'getContent']);
+    Route::post('/books/{id}/annotate', [BookController::class, 'storeAnnotation']);
+
     // Community
     Route::get('/community/groups', [CommunityController::class, 'getGroups']);
     Route::get('/community/groups/{groupId}/messages', [CommunityController::class, 'getMessages']);
