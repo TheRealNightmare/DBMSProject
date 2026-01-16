@@ -5,8 +5,7 @@ use Illuminate\Http\Request;
 
 class EventController extends Controller {
     public function index() {
-        return Event::where('start_time', '>', now())
-            ->orderBy('start_time', 'asc')
-            ->get();
+        // IMPORTANT: Removed the where('start_time', '>', now()) check
+        return Event::orderBy('start_time', 'asc')->get();
     }
 }

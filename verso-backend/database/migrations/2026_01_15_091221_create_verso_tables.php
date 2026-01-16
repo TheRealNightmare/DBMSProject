@@ -79,7 +79,8 @@ return new class extends Migration
         Schema::create('events', function (Blueprint $table) {
             $table->id('event_id');
             $table->string('title');
-            $table->string('host_name'); // Simplified from host_type/host_id for MVP
+            $table->string('category')->nullable(); // Added category
+            $table->string('host_name');
             $table->text('description')->nullable();
             $table->timestamp('start_time');
             $table->timestamp('end_time')->nullable();

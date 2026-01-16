@@ -36,7 +36,7 @@
         :key="index"
         class="min-h-[100px] border-b border-r border-gray-400/30 p-2 relative flex flex-col transition hover:bg-white/10 group"
         :class="[
-          cell.event ? cell.event.bgColor : '',
+          cell.event ? getCategoryColor(cell.event.category) : '',
           !cell.isCurrentMonth ? 'bg-gray-100/50 opacity-60' : '',
           'first:border-l border-gray-400/30',
         ]"
@@ -64,7 +64,7 @@
             {{ cell.event.title }}
           </p>
           <p class="text-[9px] text-verso-dark/70 font-medium">
-            {{ cell.event.sub }}
+            {{ cell.event.host_name }}
           </p>
         </div>
       </div>
@@ -75,6 +75,13 @@
 <script setup>
 import { ref, computed } from "vue";
 import { ChevronLeft, ChevronRight } from "lucide-vue-next";
+
+const props = defineProps({
+  events: {
+    type: Array,
+    default: () => [],
+  },
+});
 
 const days = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
 const monthNames = [
@@ -92,7 +99,6 @@ const monthNames = [
   "December",
 ];
 
-// State for current view
 const dateContext = ref(new Date());
 
 const currentMonthName = computed(
@@ -100,60 +106,27 @@ const currentMonthName = computed(
 );
 const currentYear = computed(() => dateContext.value.getFullYear());
 
-// Mock Events Map (Day of month -> Event Data)
-// Events will appear on these specific dates of *any* month to demonstrate functionality
-const mockEvents = {
-  1: { title: "Know your Writer", sub: "Brian Cox", bgColor: "bg-[#C08581]" },
-  4: { title: "Genre-mania", sub: "Jerome K.Jerome", bgColor: "bg-[#DCC46B]" },
-  6: {
-    title: "Movie screening",
-    sub: "Dianne Russell",
-    bgColor: "bg-[#70A0A0]",
-  },
-  8: {
-    title: "Play on.........",
-    sub: "Daniel Defoe",
-    bgColor: "bg-[#B27BCB]",
-  },
-  14: {
-    title: "Know your Writer",
-    sub: "Kurt Vonnegut",
-    bgColor: "bg-[#C08581]",
-  },
-  18: { title: "Genre-mania", sub: "Danai Gurira", bgColor: "bg-[#DCC46B]" },
-  20: {
-    title: "Movie screening",
-    sub: "Gwyneth Paltrow",
-    bgColor: "bg-[#70A0A0]",
-  },
-  23: {
-    title: "Play on.........",
-    sub: "Jane Austen",
-    bgColor: "bg-[#B27BCB]",
-  },
-  26: { title: "Genre-mania", sub: "Mark Twain", bgColor: "bg-[#DCC46B]" },
-  29: {
-    title: "Know your Writer",
-    sub: "Renée Zellweger",
-    bgColor: "bg-[#C08581]",
-  },
+const getCategoryColor = (category) => {
+  const map = {
+    "Know your Writer": "bg-[#C08581]",
+    "Genre-mania": "bg-[#DCC46B]",
+    "Movie screening": "bg-[#70A0A0]",
+    "Play on.........": "bg-[#B27BCB]",
+  };
+  return map[category] || "bg-[#DCC46B]";
 };
 
 const calendarGrid = computed(() => {
   const year = dateContext.value.getFullYear();
   const month = dateContext.value.getMonth();
-
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
-
-  const startingDayOfWeek = firstDay.getDay(); // 0 (Sun) to 6 (Sat)
+  const startingDayOfWeek = firstDay.getDay();
   const totalDays = lastDay.getDate();
-
   const prevMonthLastDay = new Date(year, month, 0).getDate();
-
   const grid = [];
 
-  // Padding days (Previous Month)
+  // PADDING (PREV MONTH)
   for (let i = 0; i < startingDayOfWeek; i++) {
     grid.push({
       date: prevMonthLastDay - startingDayOfWeek + 1 + i,
@@ -163,29 +136,38 @@ const calendarGrid = computed(() => {
     });
   }
 
-  // Actual days (Current Month)
+  // CURRENT MONTH
   const today = new Date();
-  const isCurrentMonthReal =
-    today.getMonth() === month && today.getFullYear() === year;
 
   for (let i = 1; i <= totalDays; i++) {
+    // FIX: Robust Date Parsing
+    const dayEvent = props.events.find((e) => {
+      // Replace space with T to ensure "YYYY-MM-DDTHH:mm:ss" format which JS parses reliably
+      const eDate = new Date(e.start_time.replace(" ", "T"));
+      return (
+        eDate.getDate() === i &&
+        eDate.getMonth() === month &&
+        eDate.getFullYear() === year
+      );
+    });
+
+    const isToday =
+      today.getDate() === i &&
+      today.getMonth() === month &&
+      today.getFullYear() === year;
+
     grid.push({
       date: i,
       isCurrentMonth: true,
-      isToday: isCurrentMonthReal && i === today.getDate(),
-      event: mockEvents[i] || null,
+      isToday: isToday,
+      event: dayEvent || null,
     });
   }
 
-  // Padding days (Next Month) to fill grid (assuming 6 rows max 42 cells or just fill last row)
-  const remainingCells = 42 - grid.length; // Ensure constant grid size usually
+  // PADDING (NEXT MONTH)
+  const remainingCells = 42 - grid.length;
   for (let i = 1; i <= remainingCells; i++) {
-    grid.push({
-      date: i,
-      isCurrentMonth: false,
-      isToday: false,
-      event: null,
-    });
+    grid.push({ date: i, isCurrentMonth: false, isToday: false, event: null });
   }
 
   return grid;
