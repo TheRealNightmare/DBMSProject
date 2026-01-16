@@ -32,7 +32,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Events
     Route::get('/events', [EventController::class, 'index']);
-
+    Route::post('/events', [EventController::class, 'store']);
+    
     // Community
     Route::get('/community/groups', [CommunityController::class, 'getGroups']);
     Route::get('/community/groups/{groupId}/messages', [CommunityController::class, 'getMessages']);

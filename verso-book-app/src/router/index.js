@@ -13,6 +13,7 @@ const CommunityView = () => import("../views/CommunityView.vue");
 const ViewAllBooks = () => import("../views/ViewAllBooks.vue");
 const DashboardView = () => import("../views/DashboardView.vue");
 const EventView = () => import("../views/EventView.vue");
+const CreateEventView = () => import("../views/CreateEventView.vue"); // <--- Added missing import
 const BookDetailView = () => import("../views/BookDetailView.vue");
 const ReaderView = () => import("../views/ReaderView.vue");
 const StorageView = () => import("../views/StorageView.vue");
@@ -55,6 +56,12 @@ const routes = [
   {
     path: "/dashboard",
     component: DashboardView,
+    meta: { requiresAuth: true },
+  },
+  // Add the Create Event route BEFORE the generic /events route
+  {
+    path: "/events/create",
+    component: CreateEventView,
     meta: { requiresAuth: true },
   },
   {

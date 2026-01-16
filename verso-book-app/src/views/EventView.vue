@@ -1,27 +1,31 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
+import { useRouter } from "vue-router"; // Import router
 import api from "@/services/api";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Navbar from "@/components/layout/Navbar.vue";
 import BottomNav from "@/components/layout/BottomNav.vue";
 import EventBanner from "@/components/event/EventBanner.vue";
 import EventCalendar from "@/components/event/EventCalendar.vue";
+import BaseButton from "@/components/ui/BaseButton.vue"; // Import Button
 
+const router = useRouter(); // Initialize router
 const events = ref([]);
 
-// Filter for upcoming list (fix date parsing here too)
+// Filter for upcoming list and LIMIT TO 7
 const upcomingEvents = computed(() => {
   const now = new Date();
-  return events.value.filter((e) => {
-    const eDate = new Date(e.start_time.replace(" ", "T"));
-    return eDate > now;
-  });
+  return events.value
+    .filter((e) => {
+      const eDate = new Date(e.start_time.replace(" ", "T"));
+      return eDate > now;
+    })
+    .slice(0, 7); // Added slice(0, 7) to show only 7 events
 });
 
 onMounted(async () => {
   try {
     const res = await api.get("/events");
-    // console.log("Events fetched:", res.data); // Uncomment to debug in browser console
     events.value = res.data;
   } catch (e) {
     console.error("Error fetching events:", e);
@@ -39,6 +43,11 @@ onMounted(async () => {
       <main class="flex-1 overflow-x-hidden overflow-y-auto w-full">
         <div class="max-w-6xl mx-auto px-6 py-8">
           <h1 class="text-2xl font-bold text-verso-dark mb-6">Events</h1>
+          <div class="w-40">
+            <BaseButton @click="router.push('/events/create')">
+              + Create Event
+            </BaseButton>
+          </div>
 
           <div class="mb-8">
             <EventCalendar :events="events" />
