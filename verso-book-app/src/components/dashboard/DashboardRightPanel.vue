@@ -83,48 +83,74 @@
     </div>
 
     <div class="flex-1">
-      <h3 class="font-bold text-verso-dark mb-4 text-sm">Upcoming Events</h3>
-
-      <div v-if="loading" class="text-xs text-gray-400 text-center">
-        Loading events...
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-verso-dark text-sm">Todo List</h3>
+        <span
+          class="text-[10px] bg-verso-dark/10 text-verso-dark px-2 py-0.5 rounded-full font-bold"
+        >
+          {{ todos.filter((t) => !t.completed).length }}
+        </span>
       </div>
 
-      <div v-else class="space-y-6">
-        <div
-          v-for="event in upcomingEvents"
-          :key="event.event_id"
-          class="flex gap-3 group cursor-pointer"
+      <div class="flex gap-2 mb-6">
+        <input
+          v-model="newTodo"
+          @keyup.enter="addTodo"
+          type="text"
+          placeholder="Add a new task..."
+          class="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-xs text-verso-dark placeholder:text-gray-400 focus:outline-none focus:border-verso-blue focus:ring-1 focus:ring-verso-blue transition"
+        />
+        <button
+          @click="addTodo"
+          class="bg-verso-dark text-white p-1.5 rounded-lg hover:bg-opacity-90 transition active:scale-95"
         >
-          <div class="mt-0.5">
-            <div
-              class="w-5 h-5 border-2 border-gray-400 rounded-lg group-hover:border-verso-blue transition flex items-center justify-center"
-              :class="{ 'bg-verso-dark border-verso-dark': event.completed }"
-              @click="toggleEvent(event)"
-            >
-              <Check v-if="event.completed" class="w-3 h-3 text-white" />
-            </div>
-          </div>
-          <div @click="toggleEvent(event)">
+          <Plus class="w-4 h-4" />
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div
+          v-for="(todo, index) in todos"
+          :key="todo.id"
+          class="flex items-start gap-3 group"
+        >
+          <button
+            @click="toggleTodo(index)"
+            class="mt-0.5 w-4 h-4 border-2 rounded transition flex items-center justify-center flex-shrink-0"
+            :class="
+              todo.completed
+                ? 'bg-verso-dark border-verso-dark'
+                : 'border-gray-300 hover:border-verso-blue'
+            "
+          >
+            <Check v-if="todo.completed" class="w-2.5 h-2.5 text-white" />
+          </button>
+
+          <div class="flex-1 min-w-0">
             <p
-              class="text-xs font-bold text-verso-dark leading-tight"
-              :class="{ 'line-through opacity-60': event.completed }"
+              class="text-xs font-bold text-verso-dark leading-tight break-words"
+              :class="{ 'line-through opacity-50': todo.completed }"
             >
-              {{ event.title }}
+              {{ todo.text }}
             </p>
-            <p class="text-[10px] text-gray-500 mt-1">
-              <span class="font-medium text-verso-blue">{{
-                event.category || "Event"
-              }}</span>
-              • {{ formatTime(event.start_time) }}
+            <p v-if="todo.date" class="text-[10px] text-gray-400 mt-0.5">
+              {{ todo.date }}
             </p>
           </div>
+
+          <button
+            @click="removeTodo(index)"
+            class="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition p-0.5"
+          >
+            <Trash2 class="w-3.5 h-3.5" />
+          </button>
         </div>
 
         <div
-          v-if="upcomingEvents.length === 0"
-          class="text-xs text-gray-400 italic"
+          v-if="todos.length === 0"
+          class="text-xs text-gray-400 italic text-center py-4"
         >
-          No upcoming events found.
+          No tasks yet. Add one above!
         </div>
       </div>
     </div>
@@ -133,17 +159,30 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { Edit2, ChevronLeft, ChevronRight, Check } from "lucide-vue-next";
+import {
+  Edit2,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Plus,
+  Trash2,
+} from "lucide-vue-next";
 import api from "@/services/api";
 
 // --- State ---
 const user = ref({});
-const events = ref([]);
 const loading = ref(true);
+
+// Todo State
+const newTodo = ref("");
+const todos = ref([
+  { id: 1, text: "Finish 'The Stranger'", completed: false, date: "Today" },
+  { id: 2, text: "Return library books", completed: true, date: "Yesterday" },
+]);
 
 // Calendar State
 const today = new Date();
-const currentCursor = ref(new Date()); // Tracks the month being viewed
+const currentCursor = ref(new Date());
 
 // --- Computed Calendar Logic ---
 const currentMonthName = computed(() => {
@@ -157,15 +196,12 @@ const currentYear = computed(() => {
 const daysInMonth = computed(() => {
   const year = currentCursor.value.getFullYear();
   const month = currentCursor.value.getMonth();
-  // Day 0 of next month is the last day of this month
   return new Date(year, month + 1, 0).getDate();
 });
 
 const startOfMonthOffset = computed(() => {
   const year = currentCursor.value.getFullYear();
   const month = currentCursor.value.getMonth();
-  // getDay() returns 0 for Sunday, 1 for Monday.
-  // We want Monday=0, Sunday=6 to match grid.
   let day = new Date(year, month, 1).getDay();
   return day === 0 ? 6 : day - 1;
 });
@@ -185,25 +221,27 @@ const isToday = (day) => {
   );
 };
 
-const formatTime = (isoString) => {
-  const date = new Date(isoString);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+// Todo Actions
+const addTodo = () => {
+  if (!newTodo.value.trim()) return;
+
+  todos.value.unshift({
+    id: Date.now(),
+    text: newTodo.value,
+    completed: false,
+    date: "Just now",
+  });
+
+  newTodo.value = "";
 };
 
-const toggleEvent = (event) => {
-  event.completed = !event.completed;
+const removeTodo = (index) => {
+  todos.value.splice(index, 1);
 };
 
-// Filter events for "Upcoming" (Future dates + Today)
-const upcomingEvents = computed(() => {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0); // Include events from start of today
-
-  return events.value
-    .filter((e) => new Date(e.start_time) >= now)
-    .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
-    .slice(0, 5); // Show top 5
-});
+const toggleTodo = (index) => {
+  todos.value[index].completed = !todos.value[index].completed;
+};
 
 // --- API Fetching ---
 onMounted(async () => {
@@ -212,12 +250,9 @@ onMounted(async () => {
     const profileRes = await api.get("/profile");
     user.value = profileRes.data;
 
-    // 2. Fetch Events
-    const eventsRes = await api.get("/events");
-    // Add a local 'completed' state for UI toggling
-    events.value = eventsRes.data.map((e) => ({ ...e, completed: false }));
+    // Note: Events fetching removed as replaced by Todo list
   } catch (error) {
-    console.error("Error loading right panel data:", error);
+    console.error("Error loading profile:", error);
   } finally {
     loading.value = false;
   }
