@@ -13,8 +13,9 @@ use Illuminate\Support\Facades\Broadcast;
 Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
 // --- Public Routes ---
+// Added ->name('login') to prevent RouteNotFoundException if auth fails
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->name('login'); 
 Route::get('/books', [BookController::class, 'index']);
 Route::get('/books/{id}', [BookController::class, 'show']);
 
@@ -29,7 +30,6 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Profile
     Route::get('/profile', [ProfileController::class, 'show']);
-    // Old: Route::put('/profile', [ProfileController::class, 'update']);
     Route::post('/profile', [ProfileController::class, 'update']);
 
     // Events
@@ -44,8 +44,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/community/groups/{groupId}/messages', [CommunityController::class, 'getMessages']);
     Route::post('/community/groups/{groupId}/messages', [CommunityController::class, 'sendMessage']);
 
+    // --- USERS ROUTES (FIXED ORDER) ---
+    // 1. Specific routes FIRST
+    Route::get('/users/search', [UserController::class, 'search']); 
+    
+    // 2. Wildcard routes LAST
     Route::get('/users/{id}', [UserController::class, 'show']);
+    
     Route::post('/users/{id}/follow', [UserController::class, 'follow']);
     Route::delete('/users/{id}/follow', [UserController::class, 'unfollow']);
-    Route::get('/users/search', [UserController::class, 'search']);
 });

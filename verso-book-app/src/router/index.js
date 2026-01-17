@@ -1,136 +1,124 @@
 import { createRouter, createWebHistory } from "vue-router";
+import HomeView from "../views/HomeView.vue";
 import LoginView from "../views/auth/LoginView.vue";
 import RegisterView from "../views/auth/RegisterView.vue";
-import HomeView from "../views/HomeView.vue";
+import DashboardView from "../views/DashboardView.vue";
+import ViewAllBooks from "../views/ViewAllBooks.vue";
+import BookDetailView from "../views/BookDetailView.vue";
 import ProfileView from "../views/ProfileView.vue";
+import ReaderView from "../views/ReaderView.vue";
+import StorageView from "../views/StorageView.vue";
 import HistoryView from "../views/HistoryView.vue";
-import ForgotPassword from "../views/auth/ForgotPassword.vue";
-import VerifyCode from "../views/auth/VerifyCode.vue";
-import ResetPassword from "../views/auth/ResetPassword.vue";
+import EventView from "../views/EventView.vue";
+import CreateEventView from "../views/CreateEventView.vue";
+import CommunityView from "../views/CommunityView.vue";
 
-// Lazy load views
-const CommunityView = () => import("../views/CommunityView.vue");
-const ViewAllBooks = () => import("../views/ViewAllBooks.vue");
-const DashboardView = () => import("../views/DashboardView.vue");
-const EventView = () => import("../views/EventView.vue");
-const CreateEventView = () => import("../views/CreateEventView.vue"); // <--- Added missing import
-const BookDetailView = () => import("../views/BookDetailView.vue");
-const ReaderView = () => import("../views/ReaderView.vue");
-const StorageView = () => import("../views/StorageView.vue");
-import UserProfileView from "@/views/UserProfileView.vue";
-
-const routes = [
-  // --- Public Routes ---
-  { path: "/", redirect: "/login" },
-  {
-    path: "/login",
-    component: LoginView,
-    meta: { guest: true },
-  },
-  {
-    path: "/register",
-    component: RegisterView,
-    meta: { guest: true },
-  },
-  {
-    path: "/forgot-password",
-    component: ForgotPassword,
-    meta: { guest: true },
-  },
-  {
-    path: "/verify-code",
-    component: VerifyCode,
-    meta: { guest: true },
-  },
-  {
-    path: "/reset-password",
-    component: ResetPassword,
-    meta: { guest: true },
-  },
-  {
-    path: "/home",
-    component: HomeView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/dashboard",
-    component: DashboardView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/events/create",
-    component: CreateEventView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/events",
-    component: EventView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/book/:id",
-    component: BookDetailView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/read/:id",
-    component: ReaderView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/profile",
-    component: ProfileView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/history",
-    component: HistoryView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/storage",
-    component: StorageView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/community",
-    component: CommunityView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/category/:category",
-    component: ViewAllBooks,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/user/:id",
-    name: "user-profile",
-    component: UserProfileView,
-    meta: { requiresAuth: true },
-  },
-];
+// [NEW] Import the User Profile View
+import UserProfileView from "../views/UserProfileView.vue";
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes,
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: "/",
+      name: "home",
+      component: HomeView,
+    },
+    {
+      path: "/home",
+      name: "home-redirect",
+      component: HomeView,
+    },
+    {
+      path: "/login",
+      name: "login",
+      component: LoginView,
+    },
+    {
+      path: "/register",
+      name: "register",
+      component: RegisterView,
+    },
+    {
+      path: "/dashboard",
+      name: "dashboard",
+      component: DashboardView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/books",
+      name: "books",
+      component: ViewAllBooks,
+    },
+    {
+      path: "/books/:id",
+      name: "book-detail",
+      component: BookDetailView,
+      props: true,
+    },
+    {
+      path: "/profile",
+      name: "profile",
+      component: ProfileView,
+      meta: { requiresAuth: true },
+    },
+    // [NEW] Added route for public user profiles
+    {
+      path: "/users/:id",
+      name: "user-profile",
+      component: UserProfileView,
+      props: true,
+    },
+    {
+      path: "/read/:id",
+      name: "reader",
+      component: ReaderView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/storage",
+      name: "storage",
+      component: StorageView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/history",
+      name: "history",
+      component: HistoryView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/events",
+      name: "events",
+      component: EventView,
+    },
+    {
+      path: "/events/create",
+      name: "create-event",
+      component: CreateEventView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/community",
+      name: "community",
+      component: CommunityView,
+      meta: { requiresAuth: true },
+    },
+  ],
 });
 
 // Navigation Guard
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem("auth_token");
+  const publicPages = ["/login", "/register", "/"];
+  const authRequired = !publicPages.includes(to.path);
+  const loggedIn = localStorage.getItem("auth_token");
 
-  // 1. If route requires auth and user has no token -> Login
-  if (to.meta.requiresAuth && !token) {
-    next("/login");
+  // If auth is required and user is not logged in, redirect to login
+  if (to.meta.requiresAuth && !loggedIn) {
+    return next("/login");
   }
-  // 2. If route is for guests (login/register) and user HAS token -> Home
-  else if (to.meta.guest && token) {
-    next("/home");
-  }
-  // 3. Otherwise proceed
-  else {
-    next();
-  }
+
+  next();
 });
 
 export default router;

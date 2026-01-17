@@ -10,6 +10,12 @@ const loading = ref(false);
 const previewImage = ref(null);
 const file = ref(null);
 
+// [NEW] Refs for stats
+const stats = ref({
+  followers: 0,
+  following: 0,
+});
+
 const form = ref({
   username: "",
   email: "",
@@ -24,9 +30,11 @@ onMounted(async () => {
     form.value.email = data.email;
     form.value.bio = data.bio;
 
-    // Construct full image URL if path exists
+    // [NEW] Set stats
+    stats.value.followers = data.followers_count || 0;
+    stats.value.following = data.following_count || 0;
+
     if (data.profile_image) {
-      // Assuming backend runs on localhost:8000 and you ran 'php artisan storage:link'
       previewImage.value = `http://localhost:8000/storage/${data.profile_image}`;
     }
   } catch (e) {
@@ -34,12 +42,10 @@ onMounted(async () => {
   }
 });
 
-// Handle file selection
 const handleFileChange = (event) => {
   const selected = event.target.files[0];
   if (selected) {
     file.value = selected;
-    // Create local preview URL
     previewImage.value = URL.createObjectURL(selected);
   }
 };
@@ -47,7 +53,6 @@ const handleFileChange = (event) => {
 const handleUpdate = async () => {
   loading.value = true;
   try {
-    // We must use FormData for file uploads
     const formData = new FormData();
     formData.append("username", form.value.username);
     formData.append("email", form.value.email);
@@ -82,6 +87,23 @@ const handleUpdate = async () => {
       <Navbar />
       <main class="flex-1 overflow-x-hidden overflow-y-auto w-full p-6">
         <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-8">
+          <div
+            class="flex justify-center space-x-12 mb-8 pb-8 border-b border-gray-100"
+          >
+            <div class="text-center">
+              <span class="block font-bold text-2xl text-verso-dark">{{
+                stats.followers
+              }}</span>
+              <span class="text-sm text-gray-500">Followers</span>
+            </div>
+            <div class="text-center">
+              <span class="block font-bold text-2xl text-verso-dark">{{
+                stats.following
+              }}</span>
+              <span class="text-sm text-gray-500">Following</span>
+            </div>
+          </div>
+
           <h1 class="text-2xl font-bold text-verso-dark mb-6">Edit Profile</h1>
 
           <form @submit.prevent="handleUpdate" class="space-y-6">
