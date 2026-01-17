@@ -216,6 +216,13 @@ onMounted(async () => {
     localStorage.setItem("user", JSON.stringify(data));
   } catch (e) {
     console.error("Failed to fetch fresh profile data", e);
+
+    // [FIXED] Handle 401 Unauthorized errors by logging out
+    if (e.response && e.response.status === 401) {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user");
+      router.push("/login");
+    }
   }
 });
 </script>

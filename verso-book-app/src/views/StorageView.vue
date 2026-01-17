@@ -84,14 +84,15 @@ const loading = ref(true);
 const storageBooks = ref([]);
 
 const goToBook = (id) => {
-  router.push(`/book/${id}`);
+  // [FIXED] Changed from router.push(`/book/${id}`) to use the named route
+  // matching the router configuration (/books/:id)
+  router.push({ name: "book-detail", params: { id } });
 };
 
 onMounted(async () => {
   try {
     loading.value = true;
     // NOTE: Fetching 'business' or 'favorite' type books to simulate a saved library
-    // Update "business" to whatever category you want to show here, or create a 'saved' endpoint later.
     storageBooks.value = await bookService.getBooks("business", 10);
   } catch (e) {
     console.error("Failed to load storage books", e);

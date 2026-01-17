@@ -125,7 +125,11 @@ const exclusiveBooks = ref([]);
 const highlyRatedBooks = ref([]);
 const favoriteBooks = ref([]);
 
-const goToBook = (id) => router.push(`/book/${id}`);
+const goToBook = (id) => {
+  // [FIXED] Changed from router.push(`/book/${id}`) to use the named route
+  // matching the router configuration (/books/:id)
+  router.push({ name: "book-detail", params: { id } });
+};
 
 // Navigation handler for View All
 const viewAll = (category) => {
