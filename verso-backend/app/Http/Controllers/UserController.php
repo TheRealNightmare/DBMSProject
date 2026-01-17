@@ -8,12 +8,39 @@ use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    // Get public profile of a user (not the logged-in user)
+    // [NEW] Search users
+    public function search(Request $request)
+    {
+        $query = $request->query('query');
+
+        if (!$query) {
+            return response()->json([]);
+        }
+
+        $currentUser = $request->user();
+
+        // Search by username, exclude current user
+        $users = User::where('username', 'LIKE', "%{$query}%")
+            ->where('user_id', '!=', $currentUser->user_id)
+            ->withCount(['followers', 'following'])
+            ->limit(10)
+            ->get();
+
+        // Check is_following status for each result
+        $users->each(function ($user) use ($currentUser) {
+            $user->is_following = $currentUser->following()
+                ->where('following_id', $user->user_id)
+                ->exists();
+        });
+
+        return response()->json($users);
+    }
+
+    // Get public profile of a user (Existing)
     public function show($id)
     {
         $user = User::withCount(['followers', 'following'])->findOrFail($id);
         
-        // Check if the currently authenticated user is following this user
         $isFollowing = false;
         if (Auth::check()) {
             $isFollowing = Auth::user()->following()->where('following_id', $id)->exists();
@@ -25,7 +52,7 @@ class UserController extends Controller
         ]);
     }
 
-    // Follow a user
+    // Follow (Existing)
     public function follow(Request $request, $id)
     {
         $targetUser = User::findOrFail($id);
@@ -42,7 +69,7 @@ class UserController extends Controller
         return response()->json(['message' => 'Followed successfully']);
     }
 
-    // Unfollow a user
+    // Unfollow (Existing)
     public function unfollow(Request $request, $id)
     {
         $currentUser = $request->user();
