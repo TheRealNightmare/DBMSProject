@@ -7,6 +7,7 @@ use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::routes(['middleware' => ['auth:sanctum']]);
@@ -42,4 +43,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/community/groups', [CommunityController::class, 'getGroups']);
     Route::get('/community/groups/{groupId}/messages', [CommunityController::class, 'getMessages']);
     Route::post('/community/groups/{groupId}/messages', [CommunityController::class, 'sendMessage']);
+
+    Route::get('/users/{id}', [UserController::class, 'show']);
+    Route::post('/users/{id}/follow', [UserController::class, 'follow']);
+    Route::delete('/users/{id}/follow', [UserController::class, 'unfollow']);
 });

@@ -106,6 +106,15 @@ return new class extends Migration
             $table->string('color', 20)->default('yellow');
             $table->timestamps();
         });
+        Schema::create('follows', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('follower_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->foreignId('following_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->timestamps();
+
+            // Prevent duplicate follows
+            $table->unique(['follower_id', 'following_id']);
+        });
     }
 
     /**

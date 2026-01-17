@@ -17,6 +17,7 @@ const CreateEventView = () => import("../views/CreateEventView.vue"); // <--- Ad
 const BookDetailView = () => import("../views/BookDetailView.vue");
 const ReaderView = () => import("../views/ReaderView.vue");
 const StorageView = () => import("../views/StorageView.vue");
+import UserProfileView from "@/views/UserProfileView.vue";
 
 const routes = [
   // --- Public Routes ---
@@ -46,8 +47,6 @@ const routes = [
     component: ResetPassword,
     meta: { guest: true },
   },
-
-  // --- Protected App Pages ---
   {
     path: "/home",
     component: HomeView,
@@ -58,7 +57,6 @@ const routes = [
     component: DashboardView,
     meta: { requiresAuth: true },
   },
-  // Add the Create Event route BEFORE the generic /events route
   {
     path: "/events/create",
     component: CreateEventView,
@@ -102,6 +100,12 @@ const routes = [
   {
     path: "/category/:category",
     component: ViewAllBooks,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/user/:id",
+    name: "user-profile",
+    component: UserProfileView,
     meta: { requiresAuth: true },
   },
 ];

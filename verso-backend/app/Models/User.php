@@ -22,8 +22,12 @@ class User extends Authenticatable
 
     protected $hidden = ['password'];
 
-    // Relationships
-    // public function shelves() {
-    //     return $this->hasMany(Shelf::class, 'user_id', 'user_id');
-    // }
+    public function followers() {
+        return $this->belongsToMany(User::class, 'follows', 'following_id', 'follower_id');
+    }
+
+    // Users that this user follows
+    public function following() {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'following_id');
+    }
 }
