@@ -38,7 +38,6 @@
                 class="w-full h-full object-cover block"
               />
             </div>
-            <div class="absolute top-10 -left-1 bg-blue-500 w-1 h-20"></div>
           </div>
 
           <div class="flex-1 flex flex-col w-full pt-2">
@@ -66,18 +65,40 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
-              <div>
-                <p class="text-gray-500 mb-1">Author</p>
-                <p class="text-verso-dark font-bold italic">
-                  {{ book.authors?.[0]?.name || book.author || "Unknown" }}
-                </p>
-              </div>
-              <div v-if="book.category">
-                <p class="text-gray-500 mb-1">Genre</p>
-                <p class="text-verso-dark font-bold italic">
-                  {{ book.category }}
-                </p>
+            <div class="mb-6">
+              <h3 class="text-gray-500 text-sm uppercase tracking-wider mb-3">
+                Authors
+              </h3>
+              <div class="flex flex-col gap-3">
+                <div
+                  v-for="author in book.authors"
+                  :key="author.id"
+                  class="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm border border-gray-100"
+                >
+                  <div class="flex items-center gap-3">
+                    <img
+                      :src="
+                        author.image ||
+                        'https://placehold.co/40?text=' + author.name.charAt(0)
+                      "
+                      class="w-10 h-10 rounded-full object-cover"
+                    />
+                    <span class="text-verso-dark font-bold">{{
+                      author.name
+                    }}</span>
+                  </div>
+                  <button
+                    @click="handleFollow(author)"
+                    :class="[
+                      'px-4 py-1.5 text-xs font-semibold rounded-full transition border',
+                      author.is_following
+                        ? 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+                        : 'bg-verso-blue text-white border-transparent hover:opacity-90',
+                    ]"
+                  >
+                    {{ author.is_following ? "Following" : "Follow" }}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -91,16 +112,6 @@
                 <BookOpen class="w-5 h-5" />
                 Read
               </button>
-
-              <button class="text-gray-500 hover:text-verso-blue transition">
-                <Bookmark class="w-6 h-6" />
-              </button>
-              <button class="text-gray-500 hover:text-red-500 transition">
-                <Heart class="w-6 h-6" />
-              </button>
-              <button class="text-gray-500 hover:text-verso-blue transition">
-                <Share2 class="w-6 h-6" />
-              </button>
             </div>
 
             <div
@@ -110,16 +121,9 @@
             </div>
           </div>
         </div>
-
-        <div v-else class="text-center py-20 text-gray-500">
-          Book not found.
-        </div>
       </main>
     </div>
     <Footer class="relative z-50" />
-    <div class="md:hidden">
-      <BottomNav active="home" />
-    </div>
   </div>
 </template>
 
@@ -127,18 +131,11 @@
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import bookService from "@/services/bookService";
+import authorService from "@/services/authorService";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Navbar from "@/components/layout/Navbar.vue";
 import Footer from "@/components/layout/Footer.vue";
-import BottomNav from "@/components/layout/BottomNav.vue";
-import {
-  ChevronLeft,
-  Star,
-  BookOpen,
-  Bookmark,
-  Heart,
-  Share2,
-} from "lucide-vue-next";
+import { ChevronLeft, Star, BookOpen } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();
@@ -155,8 +152,17 @@ const goBack = () => {
 
 const startReading = () => {
   if (book.value) {
-    // Assuming backend will eventually provide a 'content_path' or similar ID for the reader
     router.push(`/read/${book.value.id}`);
+  }
+};
+
+const handleFollow = async (author) => {
+  try {
+    const response = await authorService.toggleFollow(author.id);
+    // Update local state immediately
+    author.is_following = response.is_following;
+  } catch (e) {
+    alert("Please login to follow authors.");
   }
 };
 
@@ -165,8 +171,6 @@ onMounted(async () => {
   try {
     loading.value = true;
     const fetchedBook = await bookService.getBookDetails(bookId);
-
-    // Assign directly. No more mock data merging.
     if (fetchedBook) {
       book.value = fetchedBook;
     }

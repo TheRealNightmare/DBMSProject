@@ -22,17 +22,39 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('authors', function (Blueprint $table) {
+            $table->id('author_id');
+            $table->string('name');
+            $table->text('bio')->nullable();
+            $table->string('image')->nullable();
+            $table->timestamps();
+        });
+
         Schema::create('books', function (Blueprint $table) {
             $table->id('book_id');
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('content_path')->nullable();
             $table->string('cover_image')->nullable();
-            $table->string('author_name')->nullable(); 
             $table->date('publication_date')->nullable();
             $table->string('category')->nullable(); 
             $table->float('rating_avg')->default(0); 
             $table->timestamps();
+        });
+
+        Schema::create('book_author', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('book_id')->constrained('books', 'book_id')->onDelete('cascade');
+            $table->foreignId('author_id')->constrained('authors', 'author_id')->onDelete('cascade');
+            $table->timestamps();
+        });
+
+        Schema::create('author_follows', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->foreignId('author_id')->constrained('authors', 'author_id')->onDelete('cascade');
+            $table->timestamps();
+            $table->unique(['user_id', 'author_id']);
         });
 
         Schema::create('shelves', function (Blueprint $table) {

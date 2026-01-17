@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
@@ -53,4 +54,6 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::post('/users/{id}/follow', [UserController::class, 'follow']);
     Route::delete('/users/{id}/follow', [UserController::class, 'unfollow']);
+
+    Route::post('/authors/{id}/follow', [AuthorController::class, 'toggleFollow']);
 });
