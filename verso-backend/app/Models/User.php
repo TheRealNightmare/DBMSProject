@@ -29,4 +29,9 @@ class User extends Authenticatable
     public function followingAuthors() {
         return $this->belongsToMany(Author::class, 'author_follows', 'user_id', 'author_id');
     }
+
+    public function shelves()
+    {
+        return $this->hasMany(Shelf::class, 'user_id');
+    }
 }

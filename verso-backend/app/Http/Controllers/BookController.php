@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use App\Models\Annotation;
 use App\Models\Book;
 use App\Models\Chapter;
+use App\Models\Shelf;
+use App\Models\ShelfItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -77,8 +79,22 @@ class BookController extends Controller
         ]);
     }
 
-    // ... getContent and storeAnnotation remain unchanged ...
     public function getContent(Request $request, $bookId, $chapterIndex) {
+        $user = Auth::user();
+        
+        // Find or create the user's default shelf (you might want a dedicated 'History' shelf logic later)
+        $shelf = Shelf::firstOrCreate(
+            ['user_id' => $user->user_id, 'is_system_default' => true],
+            ['name' => 'Reading List', 'privacy_level' => 'Private']
+        );
+
+        // Add to history (Shelf Item) if not exists
+        ShelfItem::firstOrCreate(
+            ['shelf_id' => $shelf->shelf_id, 'book_id' => $bookId],
+            ['status' => 'Reading', 'added_at' => now()]
+        );
+
+        // ... existing logic to fetch chapter content ...
         $chapter = Chapter::where('book_id', $bookId)
                           ->where('order_index', $chapterIndex)
                           ->first();
@@ -115,5 +131,48 @@ class BookController extends Controller
         ]));
 
         return response()->json($annotation, 201);
+    }
+
+    public function getHistory(Request $request) {
+        $userId = Auth::id();
+        
+        // Fetch books linked to the user via shelf_items
+        $books = Book::whereHas('shelfItems.shelf', function($q) use ($userId) {
+            $q->where('user_id', $userId);
+        })
+        ->with(['authors'])
+        ->latest('updated_at') // Requires books timestamp or pivot timestamp
+        ->get();
+
+        // Transform for frontend
+        return response()->json($books->map(function($book) {
+            return [
+                'id' => $book->book_id,
+                'title' => $book->title,
+                'authors' => $book->authors->map(fn($a) => $a->name)->join(', '),
+                'image' => $book->cover_image,
+                'rating' => $book->rating_avg,
+                'category' => $book->category,
+                'statusLabel' => 'Reading', // simplified
+                'date' => $book->created_at->format('M d, Y') // simplified
+            ];
+        }));
+    }
+
+    public function removeFromHistory($id) {
+        $userId = Auth::id();
+        
+        // Find the item on any of the user's shelves and delete it
+        $deleted = ShelfItem::where('book_id', $id)
+            ->whereHas('shelf', function($q) use ($userId) {
+                $q->where('user_id', $userId);
+            })
+            ->delete();
+
+        if ($deleted) {
+            return response()->json(['message' => 'Removed from history']);
+        }
+        
+        return response()->json(['message' => 'Book not found in history'], 404);
     }
 }

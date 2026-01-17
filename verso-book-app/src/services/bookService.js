@@ -44,4 +44,24 @@ export default {
       throw error;
     }
   },
+
+  async getHistory() {
+    try {
+      const response = await api.get("/history");
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
+      return [];
+    }
+  },
+
+  async removeFromHistory(bookId) {
+    try {
+      await api.delete(`/history/${bookId}`);
+      return true;
+    } catch (error) {
+      console.error("Failed to remove book:", error);
+      return false;
+    }
+  },
 };

@@ -56,4 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/users/{id}/follow', [UserController::class, 'unfollow']);
 
     Route::post('/authors/{id}/follow', [AuthorController::class, 'toggleFollow']);
+    
+    Route::get('/history', [BookController::class, 'getHistory']);
+    Route::delete('/history/{id}', [BookController::class, 'removeFromHistory']);
 });

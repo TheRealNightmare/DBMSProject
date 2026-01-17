@@ -96,6 +96,7 @@
             </div>
 
             <button
+              @click.stop="removeFromHistory(book.id)"
               class="absolute top-0 right-0 md:relative md:top-auto md:right-auto text-verso-dark hover:text-red-500 transition p-2"
             >
               <X class="w-8 h-8" />
@@ -136,25 +137,22 @@ const startReading = (id) => {
   router.push(`/read/${id}`);
 };
 
+// Add the remove function
+const removeFromHistory = async (id) => {
+  if (!confirm("Remove this book from your history?")) return;
+
+  const success = await bookService.removeFromHistory(id);
+  if (success) {
+    // Remove from UI immediately
+    historyBooks.value = historyBooks.value.filter((b) => b.id !== id);
+  }
+};
+
 onMounted(async () => {
   try {
     loading.value = true;
-    // NOTE: Since the backend doesn't have a specific 'history' endpoint yet,
-    // we fetch the latest books to simulate the history view.
-    const books = await bookService.getBooks("latest", 5);
-
-    // Map API data to the History UI specific fields
-    historyBooks.value = books.map((book) => ({
-      ...book,
-      statusLabel: "Read", // Mock status until backend supports user tracking
-      date:
-        new Date().toLocaleDateString() +
-        " " +
-        new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-    }));
+    // FETCH REAL HISTORY
+    historyBooks.value = await bookService.getHistory();
   } catch (e) {
     console.error("Failed to load history", e);
   } finally {
