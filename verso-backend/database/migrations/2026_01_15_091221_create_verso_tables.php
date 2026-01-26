@@ -87,6 +87,9 @@ return new class extends Migration
             $table->id('group_id');
             $table->string('name', 100);
             $table->text('description')->nullable();
+            $table->string('room_code', 50)->unique(); // Unique code for joining
+            $table->boolean('is_default')->default(false); // Mark default channels
+            $table->foreignId('created_by')->nullable()->constrained('users', 'user_id')->onDelete('set null'); // Creator
             $table->timestamps();
         });
 

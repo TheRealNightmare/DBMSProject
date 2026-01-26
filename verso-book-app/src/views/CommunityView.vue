@@ -22,9 +22,25 @@
 
             <div class="flex-1 overflow-y-auto p-3 space-y-1">
               <div
-                class="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider"
+                class="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider flex justify-between items-center"
               >
-                Channels
+                <span>Channels</span>
+                <div class="flex gap-1">
+                  <button
+                    @click="showCreateModal = true"
+                    class="text-verso-blue hover:bg-verso-blue/10 rounded p-1"
+                    title="Create Channel"
+                  >
+                    <Plus class="w-4 h-4" />
+                  </button>
+                  <button
+                    @click="showJoinModal = true"
+                    class="text-green-600 hover:bg-green-50 rounded p-1"
+                    title="Join Channel"
+                  >
+                    <UserPlus class="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               <div
@@ -46,7 +62,10 @@
                 "
               >
                 <span class="text-lg">#</span>
-                <span class="font-medium text-sm">{{ channel.name }}</span>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-sm truncate">{{ channel.name }}</div>
+                  <div v-if="channel.is_default" class="text-xs text-gray-400">Default</div>
+                </div>
               </button>
             </div>
           </div>
@@ -61,6 +80,9 @@
                   <h3 class="font-bold text-verso-dark">
                     {{ currentChannelName }}
                   </h3>
+                  <p v-if="currentChannelDescription" class="text-xs text-gray-500">
+                    {{ currentChannelDescription }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -150,6 +172,113 @@
     <div class="md:hidden">
       <BottomNav active="community" />
     </div>
+
+    <!-- Create Channel Modal -->
+    <div
+      v-if="showCreateModal"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      @click.self="showCreateModal = false"
+    >
+      <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+        <h3 class="text-xl font-bold text-verso-dark mb-4">Create New Channel</h3>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Channel Name</label>
+            <input
+              v-model="createForm.name"
+              type="text"
+              placeholder="e.g. Fantasy Lovers"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-verso-blue/20 focus:border-verso-blue"
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea
+              v-model="createForm.description"
+              placeholder="What is this channel about?"
+              rows="3"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-verso-blue/20 focus:border-verso-blue"
+            ></textarea>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Room Code</label>
+            <input
+              v-model="createForm.room_code"
+              type="text"
+              placeholder="e.g. FANTASY-2026"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-verso-blue/20 focus:border-verso-blue"
+            />
+            <p class="text-xs text-gray-500 mt-1">Others will use this code to join your channel</p>
+          </div>
+        </div>
+
+        <div v-if="createError" class="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+          {{ createError }}
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button
+            @click="showCreateModal = false"
+            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+          >
+            Cancel
+          </button>
+          <button
+            @click="createChannel"
+            :disabled="!createForm.name || !createForm.room_code"
+            class="flex-1 px-4 py-2 bg-verso-blue text-white rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Create Channel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Join Channel Modal -->
+    <div
+      v-if="showJoinModal"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      @click.self="showJoinModal = false"
+    >
+      <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+        <h3 class="text-xl font-bold text-verso-dark mb-4">Join Channel</h3>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Room Code</label>
+            <input
+              v-model="joinForm.room_code"
+              type="text"
+              placeholder="Enter the room code"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-verso-blue/20 focus:border-verso-blue"
+            />
+          </div>
+        </div>
+
+        <div v-if="joinError" class="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+          {{ joinError }}
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button
+            @click="showJoinModal = false"
+            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+          >
+            Cancel
+          </button>
+          <button
+            @click="joinChannel"
+            :disabled="!joinForm.room_code"
+            class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Join Channel
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -158,7 +287,7 @@ import { ref, onMounted, onUnmounted, nextTick, watch, computed } from "vue";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Navbar from "@/components/layout/Navbar.vue";
 import BottomNav from "@/components/layout/BottomNav.vue";
-import { Send } from "lucide-vue-next";
+import { Send, Plus, UserPlus } from "lucide-vue-next";
 import api from "@/services/api";
 import createEcho from "@/services/echo";
 
@@ -171,6 +300,20 @@ const newMessage = ref("");
 const currentUser = ref(JSON.parse(localStorage.getItem("user") || "{}"));
 const messagesContainer = ref(null);
 
+// Modal states
+const showCreateModal = ref(false);
+const showJoinModal = ref(false);
+const createForm = ref({
+  name: "",
+  description: "",
+  room_code: "",
+});
+const joinForm = ref({
+  room_code: "",
+});
+const createError = ref("");
+const joinError = ref("");
+
 let echoInstance = null;
 
 const currentChannelName = computed(() => {
@@ -178,6 +321,10 @@ const currentChannelName = computed(() => {
     channels.value.find((c) => c.id === activeChannel.value)?.name ||
     "Select a Channel"
   );
+});
+
+const currentChannelDescription = computed(() => {
+  return channels.value.find((c) => c.id === activeChannel.value)?.description || "";
 });
 
 // Lifecycle
@@ -232,9 +379,72 @@ const fetchGroups = async () => {
     channels.value = response.data.map((g) => ({
       id: g.group_id,
       name: g.name,
+      description: g.description,
+      is_default: g.is_default,
+      room_code: g.room_code,
     }));
   } catch (error) {
     console.error("Failed to fetch groups:", error);
+  }
+};
+
+const createChannel = async () => {
+  createError.value = "";
+  
+  try {
+    const response = await api.post("/community/channels/create", createForm.value);
+    const newChannel = response.data.channel;
+    
+    // Add to channels list
+    channels.value.push({
+      id: newChannel.group_id,
+      name: newChannel.name,
+      description: newChannel.description,
+      is_default: newChannel.is_default,
+      room_code: newChannel.room_code,
+    });
+    
+    // Switch to the new channel
+    activeChannel.value = newChannel.group_id;
+    
+    // Reset and close modal
+    createForm.value = { name: "", description: "", room_code: "" };
+    showCreateModal.value = false;
+  } catch (error) {
+    console.error("Failed to create channel:", error);
+    createError.value = error.response?.data?.message || "Failed to create channel. Room code might already be in use.";
+  }
+};
+
+const joinChannel = async () => {
+  joinError.value = "";
+  
+  try {
+    const response = await api.post("/community/channels/join", joinForm.value);
+    const foundChannel = response.data.channel;
+    
+    // Check if already in list
+    const exists = channels.value.find(c => c.id === foundChannel.group_id);
+    
+    if (!exists) {
+      channels.value.push({
+        id: foundChannel.group_id,
+        name: foundChannel.name,
+        description: foundChannel.description,
+        is_default: foundChannel.is_default,
+        room_code: foundChannel.room_code,
+      });
+    }
+    
+    // Switch to the channel
+    activeChannel.value = foundChannel.group_id;
+    
+    // Reset and close modal
+    joinForm.value = { room_code: "" };
+    showJoinModal.value = false;
+  } catch (error) {
+    console.error("Failed to join channel:", error);
+    joinError.value = error.response?.data?.message || "Channel not found with this room code.";
   }
 };
 

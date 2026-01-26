@@ -44,6 +44,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/community/groups', [CommunityController::class, 'getGroups']);
     Route::get('/community/groups/{groupId}/messages', [CommunityController::class, 'getMessages']);
     Route::post('/community/groups/{groupId}/messages', [CommunityController::class, 'sendMessage']);
+    Route::post('/community/channels/create', [CommunityController::class, 'createChannel']);
+    Route::post('/community/channels/join', [CommunityController::class, 'joinChannel']);
 
     // --- USERS ROUTES (FIXED ORDER) ---
     // 1. Specific routes FIRST

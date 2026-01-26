@@ -7,13 +7,14 @@ use App\Models\Group;
 use App\Models\GroupMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class CommunityController extends Controller
 {
     // Get list of all community groups
     public function getGroups()
     {
-        $groups = Group::all();
+        $groups = Group::with('creator:user_id,username')->get();
         return response()->json($groups);
     }
 
@@ -58,6 +59,56 @@ class CommunityController extends Controller
         return response()->json([
             'status' => 'Message Sent!',
             'message' => $message
+        ]);
+    }
+
+    // Create a new channel
+    public function createChannel(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'description' => 'nullable|string',
+            'room_code' => 'required|string|max:50|unique:groups,room_code',
+        ]);
+
+        $user = $request->user();
+
+        $group = Group::create([
+            'name' => $request->input('name'),
+            'description' => $request->input('description'),
+            'room_code' => $request->input('room_code'),
+            'is_default' => false,
+            'created_by' => $user->user_id,
+        ]);
+
+        $group->load('creator:user_id,username');
+
+        return response()->json([
+            'message' => 'Channel created successfully',
+            'channel' => $group
+        ], 201);
+    }
+
+    // Join a channel using room code
+    public function joinChannel(Request $request)
+    {
+        $request->validate([
+            'room_code' => 'required|string|max:50',
+        ]);
+
+        $group = Group::where('room_code', $request->input('room_code'))->first();
+
+        if (!$group) {
+            return response()->json([
+                'message' => 'Channel not found with this room code'
+            ], 404);
+        }
+
+        $group->load('creator:user_id,username');
+
+        return response()->json([
+            'message' => 'Channel found',
+            'channel' => $group
         ]);
     }
 }

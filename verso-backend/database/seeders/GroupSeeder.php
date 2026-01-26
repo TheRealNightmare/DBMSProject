@@ -13,17 +13,23 @@ class GroupSeeder extends Seeder
         if (Group::count() === 0) {
             Group::create([
                 'name' => 'General', 
-                'description' => 'General discussion for everyone'
+                'description' => 'General discussion for everyone',
+                'room_code' => 'GENERAL-CHAT',
+                'is_default' => true,
             ]);
             
             Group::create([
                 'name' => 'Book Club', 
-                'description' => 'Discussing our monthly reads'
+                'description' => 'Discussing our monthly reads',
+                'room_code' => 'BOOK-CLUB',
+                'is_default' => true,
             ]);
             
             Group::create([
                 'name' => 'Recommendations', 
-                'description' => 'Share your favorite books'
+                'description' => 'Share your favorite books',
+                'room_code' => 'BOOK-RECS',
+                'is_default' => true,
             ]);
         }
     }

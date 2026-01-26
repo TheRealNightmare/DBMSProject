@@ -19,7 +19,8 @@ class DatabaseSeeder extends Seeder
             BookSeeder::class,
             EventSeeder::class,
             UserInteractionSeeder::class,
-            GroupSeeder::class,
+            GroupSeeder::class, // Creates default community channels
+            DashboardUserSeeder::class,
         ]);
     }
 }
