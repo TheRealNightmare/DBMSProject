@@ -7,6 +7,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserController;
@@ -40,6 +41,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/books/{id}/read/{chapter}', [BookController::class, 'getContent']);
     Route::post('/books/{id}/annotate', [BookController::class, 'storeAnnotation']);
+    Route::post('/books/{id}/rate', [BookController::class, 'rateBook']);
+    Route::get('/books/{id}/comments', [BookController::class, 'getComments']);
+    Route::post('/books/{id}/comments', [BookController::class, 'addComment']);
 
     // Community
     Route::get('/community/groups', [CommunityController::class, 'getGroups']);
@@ -47,6 +51,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/community/groups/{groupId}/messages', [CommunityController::class, 'sendMessage']);
     Route::post('/community/channels/create', [CommunityController::class, 'createChannel']);
     Route::post('/community/channels/join', [CommunityController::class, 'joinChannel']);
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::post('/notifications/send', [NotificationController::class, 'sendScheduledNotifications']);
 
     // --- SEARCH ROUTES ---
     Route::get('/search', [SearchController::class, 'search']); // Unified search

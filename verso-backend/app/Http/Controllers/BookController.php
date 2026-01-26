@@ -3,11 +3,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Annotation;
 use App\Models\Book;
+use App\Models\BookComment;
+use App\Models\BookRating;
 use App\Models\Chapter;
 use App\Models\Shelf;
 use App\Models\ShelfItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class BookController extends Controller
 {
@@ -53,6 +56,19 @@ class BookController extends Controller
     public function show($id) {
         $book = Book::with('authors')->findOrFail($id);
         
+        // Get average rating and count
+        $ratingStats = BookRating::where('book_id', $id)
+            ->selectRaw('AVG(rating) as avg_rating, COUNT(*) as rating_count')
+            ->first();
+        
+        // Check if current user has rated this book
+        $userRating = null;
+        if (Auth::check()) {
+            $userRating = BookRating::where('book_id', $id)
+                ->where('user_id', Auth::id())
+                ->value('rating');
+        }
+        
         // Check if the current user follows any of these authors
         $authors = $book->authors->map(function($author) {
             $isFollowing = false;
@@ -74,7 +90,9 @@ class BookController extends Controller
             'description' => $book->description ?? 'No description available.',
             'image' => $book->cover_image,
             'authors' => $authors,
-            'rating' => $book->rating_avg,
+            'rating' => round($ratingStats->avg_rating ?? 0, 1),
+            'rating_count' => $ratingStats->rating_count ?? 0,
+            'user_rating' => $userRating,
             'category' => $book->category
         ]);
     }
@@ -174,5 +192,80 @@ class BookController extends Controller
         }
         
         return response()->json(['message' => 'Book not found in history'], 404);
+    }
+
+    // Rate a book (1-5 stars)
+    public function rateBook(Request $request, $bookId) {
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5'
+        ]);
+
+        $userId = Auth::id();
+
+        // Create or update rating
+        $rating = BookRating::updateOrCreate(
+            ['book_id' => $bookId, 'user_id' => $userId],
+            ['rating' => $request->rating]
+        );
+
+        // Recalculate average rating
+        $avgRating = BookRating::where('book_id', $bookId)->avg('rating');
+        Book::where('book_id', $bookId)->update(['rating_avg' => $avgRating]);
+
+        return response()->json([
+            'message' => 'Rating submitted successfully',
+            'rating' => $rating,
+            'avg_rating' => round($avgRating, 1)
+        ]);
+    }
+
+    // Get comments for a book
+    public function getComments($bookId) {
+        $comments = BookComment::where('book_id', $bookId)
+            ->with('user:user_id,username,profile_image')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($comments->map(function($comment) {
+            return [
+                'comment_id' => $comment->comment_id,
+                'comment' => $comment->comment,
+                'user' => [
+                    'user_id' => $comment->user->user_id,
+                    'username' => $comment->user->username,
+                    'profile_image' => $comment->user->profile_image
+                ],
+                'created_at' => $comment->created_at->diffForHumans()
+            ];
+        }));
+    }
+
+    // Add a comment to a book
+    public function addComment(Request $request, $bookId) {
+        $request->validate([
+            'comment' => 'required|string|max:1000'
+        ]);
+
+        $comment = BookComment::create([
+            'book_id' => $bookId,
+            'user_id' => Auth::id(),
+            'comment' => $request->comment
+        ]);
+
+        $comment->load('user:user_id,username,profile_image');
+
+        return response()->json([
+            'message' => 'Comment added successfully',
+            'comment' => [
+                'comment_id' => $comment->comment_id,
+                'comment' => $comment->comment,
+                'user' => [
+                    'user_id' => $comment->user->user_id,
+                    'username' => $comment->user->username,
+                    'profile_image' => $comment->user->profile_image
+                ],
+                'created_at' => $comment->created_at->diffForHumans()
+            ]
+        ], 201);
     }
 }
