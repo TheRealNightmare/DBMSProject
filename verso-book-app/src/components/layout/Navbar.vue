@@ -141,14 +141,7 @@
       <div
         class="flex items-center gap-4 md:gap-6 pl-4 border-l border-gray-200/50"
       >
-        <button
-          class="text-gray-500 hover:text-verso-dark relative p-2 hover:bg-white/50 rounded-full transition-colors"
-        >
-          <Bell class="w-5 h-5" />
-          <span
-            class="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full border border-verso-cream"
-          ></span>
-        </button>
+        <NotificationPanel />
 
         <router-link to="/profile" class="flex items-center gap-3 group">
           <div class="relative">
@@ -176,10 +169,11 @@
 </template>
 
 <script setup>
-import { Search, Bell } from "lucide-vue-next";
+import { Search } from "lucide-vue-next";
 import { ref, onMounted } from "vue";
 import api from "@/services/api";
 import { useRouter } from "vue-router";
+import NotificationPanel from "./NotificationPanel.vue";
 
 const router = useRouter();
 
