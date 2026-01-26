@@ -8,6 +8,7 @@ use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -47,10 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/community/channels/create', [CommunityController::class, 'createChannel']);
     Route::post('/community/channels/join', [CommunityController::class, 'joinChannel']);
 
+    // --- SEARCH ROUTES ---
+    Route::get('/search', [SearchController::class, 'search']); // Unified search
+    Route::get('/users/search', [UserController::class, 'search']); // Legacy user search
+    
     // --- USERS ROUTES (FIXED ORDER) ---
     // 1. Specific routes FIRST
-    Route::get('/users/search', [UserController::class, 'search']); 
-    
     // 2. Wildcard routes LAST
     Route::get('/users/{id}', [UserController::class, 'show']);
     

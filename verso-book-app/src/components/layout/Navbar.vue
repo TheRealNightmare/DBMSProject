@@ -18,7 +18,7 @@
             v-model="searchQuery"
             @keyup.enter="executeSearch"
             class="block w-full pl-11 pr-24 py-3 rounded-full border-none bg-white shadow-sm text-verso-dark placeholder-gray-400 focus:ring-2 focus:ring-verso-blue/20 focus:outline-none transition-all"
-            placeholder="Search users..."
+            placeholder="Search users and books..."
           />
 
           <button
@@ -43,7 +43,7 @@
           >
             <span
               class="text-[10px] font-bold text-gray-400 uppercase tracking-widest"
-              >Results</span
+              >Search Results</span
             >
             <button
               @click="clearSearch"
@@ -53,54 +53,88 @@
             </button>
           </div>
 
-          <div
-            v-if="searchResults.length > 0"
-            class="max-h-[350px] overflow-y-auto custom-scrollbar"
-          >
-            <div
-              v-for="user in searchResults"
-              :key="user.user_id"
-              @click="goToProfile(user.user_id)"
-              class="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer transition border-b border-gray-50 last:border-none group"
-            >
-              <img
-                :src="getAvatarUrl(user.profile_image)"
-                class="w-12 h-12 rounded-full object-cover border border-gray-100 bg-gray-200 group-hover:border-verso-blue/50 transition-colors shadow-sm"
-              />
+          <div class="max-h-[400px] overflow-y-auto custom-scrollbar">
+            <!-- Users Section -->
+            <div v-if="searchResults.length > 0" class="border-b border-gray-100">
+              <div class="px-4 py-2 bg-gray-50">
+                <h3 class="text-xs font-bold text-gray-600 uppercase">Users ({{ searchResults.length }})</h3>
+              </div>
+              <div
+                v-for="user in searchResults"
+                :key="user.user_id"
+                @click="goToProfile(user.user_id)"
+                class="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer transition border-b border-gray-50 last:border-none group"
+              >
+                <img
+                  :src="getAvatarUrl(user.profile_image)"
+                  class="w-12 h-12 rounded-full object-cover border border-gray-100 bg-gray-200 group-hover:border-verso-blue/50 transition-colors shadow-sm"
+                />
 
-              <div class="flex-1 min-w-0">
-                <div class="flex justify-between items-center">
+                <div class="flex-1 min-w-0">
+                  <div class="flex justify-between items-center">
+                    <p
+                      class="font-bold text-verso-dark group-hover:text-verso-blue transition-colors truncate text-sm md:text-base"
+                    >
+                      {{ user.username }}
+                    </p>
+                    <span
+                      v-if="user.is_following"
+                      class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium"
+                      >Following</span
+                    >
+                  </div>
+                  <p class="text-xs text-gray-500 mt-0.5">
+                    {{ user.followers_count }} followers
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Books Section -->
+            <div v-if="bookResults.length > 0">
+              <div class="px-4 py-2 bg-gray-50">
+                <h3 class="text-xs font-bold text-gray-600 uppercase">Books ({{ bookResults.length }})</h3>
+              </div>
+              <div
+                v-for="book in bookResults"
+                :key="book.book_id"
+                @click="goToBook(book.book_id)"
+                class="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer transition border-b border-gray-50 last:border-none group"
+              >
+                <img
+                  :src="book.cover_image"
+                  class="w-12 h-16 rounded object-cover border border-gray-100 bg-gray-200 group-hover:border-verso-blue/50 transition-colors shadow-sm"
+                />
+                <div class="flex-1 min-w-0">
                   <p
                     class="font-bold text-verso-dark group-hover:text-verso-blue transition-colors truncate text-sm md:text-base"
                   >
-                    {{ user.username }}
+                    {{ book.title }}
                   </p>
-                  <span
-                    v-if="user.is_following"
-                    class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium"
-                    >Following</span
-                  >
+                  <p class="text-xs text-gray-500 mt-0.5 truncate">{{ book.authors }}</p>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs text-yellow-500">★ {{ book.rating_avg }}</span>
+                    <span v-if="book.category" class="text-xs text-gray-400">{{ book.category }}</span>
+                  </div>
                 </div>
-                <p class="text-xs text-gray-500 mt-0.5">
-                  {{ user.followers_count }} followers
-                </p>
               </div>
             </div>
-          </div>
 
-          <div
-            v-else
-            class="p-8 text-center flex flex-col items-center justify-center"
-          >
-            <div class="bg-gray-50 p-3 rounded-full mb-3">
-              <Search class="h-6 w-6 text-gray-300" />
+            <!-- No Results -->
+            <div
+              v-if="searchResults.length === 0 && bookResults.length === 0"
+              class="p-8 text-center flex flex-col items-center justify-center"
+            >
+              <div class="bg-gray-50 p-3 rounded-full mb-3">
+                <Search class="h-6 w-6 text-gray-300" />
+              </div>
+              <p class="text-gray-500 text-sm">
+                No users or books found for "<span class="font-semibold text-verso-dark">{{
+                  searchQuery
+                }}</span
+                >"
+              </p>
             </div>
-            <p class="text-gray-500 text-sm">
-              No users found for "<span class="font-semibold text-verso-dark">{{
-                searchQuery
-              }}</span
-              >"
-            </p>
           </div>
         </div>
       </div>
@@ -155,7 +189,8 @@ const profileImage = ref("https://placehold.co/100x100");
 
 // --- Search State ---
 const searchQuery = ref("");
-const searchResults = ref([]);
+const searchResults = ref([]); // users
+const bookResults = ref([]); // books
 const isLoading = ref(false);
 const showResults = ref(false);
 
@@ -174,8 +209,9 @@ const executeSearch = async () => {
   showResults.value = false;
 
   try {
-    const response = await api.get(`/users/search?query=${searchQuery.value}`);
-    searchResults.value = response.data;
+    const response = await api.get(`/search?query=${searchQuery.value}`);
+    searchResults.value = response.data.users || [];
+    bookResults.value = response.data.books || [];
     showResults.value = true;
   } catch (error) {
     console.error("Search failed", error);
@@ -187,13 +223,18 @@ const executeSearch = async () => {
 const clearSearch = () => {
   showResults.value = false;
   searchResults.value = [];
+  bookResults.value = [];
   searchQuery.value = "";
 };
 
 const goToProfile = (userId) => {
-  showResults.value = false;
-  searchQuery.value = "";
+  clearSearch();
   router.push(`/users/${userId}`);
+};
+
+const goToBook = (bookId) => {
+  clearSearch();
+  router.push(`/books/${bookId}`);
 };
 
 // --- Lifecycle ---
