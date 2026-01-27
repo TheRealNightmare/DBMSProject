@@ -98,6 +98,7 @@ return new class extends Migration
             $table->foreignId('group_id')->constrained('groups', 'group_id')->onDelete('cascade');
             $table->foreignId('sender_id')->constrained('users', 'user_id')->onDelete('cascade');
             $table->text('message_body');
+            $table->boolean('is_blurred')->default(false);
             $table->timestamp('sent_at')->useCurrent();
         });
 

@@ -36,6 +36,7 @@ class CommunityController extends Controller
     {
         $request->validate([
             'message' => 'required|string|max:1000',
+            'is_blurred' => 'nullable|boolean',
         ]);
 
         $group = Group::findOrFail($groupId);
@@ -46,6 +47,7 @@ class CommunityController extends Controller
             'group_id' => $group->group_id,
             'sender_id' => $user->user_id,
             'message_body' => $request->input('message'),
+            'is_blurred' => $request->input('is_blurred', false),
             'sent_at' => now(),
         ]);
 

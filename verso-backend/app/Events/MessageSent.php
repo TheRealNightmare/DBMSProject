@@ -44,6 +44,7 @@ class MessageSent implements ShouldBroadcastNow
         return [
             'message_id' => $this->message->message_id,
             'message_body' => $this->message->message_body,
+            'is_blurred' => $this->message->is_blurred,
             'sent_at' => $this->message->sent_at,
             'sender' => [
                 'user_id' => $this->message->sender->user_id,

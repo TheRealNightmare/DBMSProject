@@ -124,20 +124,34 @@
                   </div>
 
                   <div
-                    class="px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-sm"
-                    :class="
+                    class="px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-sm cursor-pointer select-none relative"
+                    :class="[
                       msg.isMe
                         ? 'bg-verso-blue text-white rounded-tr-none'
-                        : 'bg-white text-gray-700 rounded-tl-none border border-gray-100'
-                    "
+                        : 'bg-white text-gray-700 rounded-tl-none border border-gray-100',
+                      msg.isBlurred && !msg.revealed ? 'blur-message' : ''
+                    ]"
+                    @click="msg.isBlurred && !msg.revealed ? revealMessage(msg) : null"
+                    :title="msg.isBlurred && !msg.revealed ? 'Click to reveal' : ''"
                   >
                     {{ msg.text }}
+                    <span v-if="msg.isBlurred && !msg.revealed" class="absolute top-1 right-2 text-xs opacity-70">🔒</span>
                   </div>
                 </div>
               </div>
             </div>
 
             <div class="p-4 bg-white border-t border-gray-100">
+              <div class="flex items-center gap-2 mb-2" v-if="activeChannel">
+                <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-600 hover:text-verso-blue transition">
+                  <input
+                    type="checkbox"
+                    v-model="isBlurEnabled"
+                    class="w-4 h-4 rounded border-gray-300 text-verso-blue focus:ring-verso-blue"
+                  />
+                  <span>Send as blurred message</span>
+                </label>
+              </div>
               <div
                 class="bg-gray-50 border border-gray-200 rounded-xl flex items-center px-4 py-2 gap-3 focus-within:ring-2 focus-within:ring-verso-blue/20 focus-within:border-verso-blue transition"
                 :class="{ 'opacity-50 pointer-events-none': !activeChannel }"
@@ -296,6 +310,7 @@ const activeChannel = ref(null);
 const channels = ref([]);
 const messages = ref([]);
 const newMessage = ref("");
+const isBlurEnabled = ref(false);
 // Use ref for currentUser so we can update it after fetching fresh data
 const currentUser = ref(JSON.parse(localStorage.getItem("user") || "{}"));
 const messagesContainer = ref(null);
@@ -462,13 +477,16 @@ const sendMessage = async () => {
   if (!newMessage.value.trim() || !activeChannel.value) return;
 
   const tempText = newMessage.value;
+  const blurFlag = isBlurEnabled.value;
   newMessage.value = "";
+  isBlurEnabled.value = false;
 
   try {
     const response = await api.post(
       `/community/groups/${activeChannel.value}/messages`,
       {
         message: tempText,
+        is_blurred: blurFlag,
       }
     );
 
@@ -498,6 +516,8 @@ const subscribeToChannel = (groupId) => {
       text: e.message_body,
       time: formatTime(e.sent_at),
       isMe: e.sender.user_id == currentUser.value.user_id,
+      isBlurred: e.is_blurred || false,
+      revealed: false,
     };
 
     messages.value.push(incomingMsg);
@@ -514,7 +534,13 @@ const transformMessage = (msg) => {
     text: msg.message_body,
     time: formatTime(msg.sent_at),
     isMe: msg.sender_id == currentUser.value.user_id,
+    isBlurred: msg.is_blurred || false,
+    revealed: false,
   };
+};
+
+const revealMessage = (msg) => {
+  msg.revealed = true;
 };
 
 const formatTime = (isoString) => {
@@ -531,3 +557,15 @@ const scrollToBottom = () => {
   });
 };
 </script>
+
+<style scoped>
+.blur-message {
+  filter: blur(8px);
+  user-select: none;
+  transition: filter 0.3s ease;
+}
+
+.blur-message:hover {
+  filter: blur(6px);
+}
+</style>

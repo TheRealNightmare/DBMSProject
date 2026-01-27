@@ -6,10 +6,11 @@ class GroupMessage extends Model {
     protected $primaryKey = 'message_id';
     public $timestamps = false; // Disable standard timestamps since migration uses 'sent_at'
     
-    protected $fillable = ['group_id', 'sender_id', 'message_body', 'sent_at'];
+    protected $fillable = ['group_id', 'sender_id', 'message_body', 'is_blurred', 'sent_at'];
 
     protected $casts = [
         'sent_at' => 'datetime',
+        'is_blurred' => 'boolean',
     ];
 
     public function sender() {
