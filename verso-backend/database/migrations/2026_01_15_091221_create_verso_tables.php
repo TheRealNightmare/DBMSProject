@@ -1,0 +1,153 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id('user_id'); // Custom Primary Key
+            $table->string('username', 50)->unique();
+            $table->string('email', 100)->unique();
+            $table->string('password'); // Added for Auth
+            $table->text('bio')->nullable();
+            $table->string('profile_image')->nullable();
+            $table->string('zip_code', 20)->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('authors', function (Blueprint $table) {
+            $table->id('author_id');
+            $table->string('name');
+            $table->text('bio')->nullable();
+            $table->string('image')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('books', function (Blueprint $table) {
+            $table->id('book_id');
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->string('content_path')->nullable();
+            $table->string('cover_image')->nullable();
+            $table->date('publication_date')->nullable();
+            $table->string('category')->nullable(); 
+            $table->float('rating_avg')->default(0); 
+            $table->timestamps();
+        });
+
+        Schema::create('book_author', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('book_id')->constrained('books', 'book_id')->onDelete('cascade');
+            $table->foreignId('author_id')->constrained('authors', 'author_id')->onDelete('cascade');
+            $table->timestamps();
+        });
+
+        Schema::create('author_follows', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->foreignId('author_id')->constrained('authors', 'author_id')->onDelete('cascade');
+            $table->timestamps();
+            $table->unique(['user_id', 'author_id']);
+        });
+
+        Schema::create('shelves', function (Blueprint $table) {
+            $table->id('shelf_id');
+            $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->string('name', 100);
+            $table->string('privacy_level', 20)->default('Public');
+            $table->boolean('is_system_default')->default(false);
+            $table->timestamps();
+        });
+
+        Schema::create('shelf_items', function (Blueprint $table) {
+            $table->id('item_id');
+            $table->foreignId('shelf_id')->constrained('shelves', 'shelf_id')->onDelete('cascade');
+            $table->foreignId('book_id')->constrained('books', 'book_id')->onDelete('cascade');
+            $table->string('status', 20); // 'Read', 'Reading', 'Want to Read'
+            $table->timestamp('added_at')->useCurrent();
+        });
+
+        Schema::create('reading_sessions', function (Blueprint $table) {
+            $table->id('session_id');
+            $table->foreignId('item_id')->constrained('shelf_items', 'item_id')->onDelete('cascade');
+            $table->timestamp('start_time');
+            $table->timestamp('end_time')->nullable();
+            $table->integer('pages_read_count')->default(0);
+            $table->timestamps();
+        });
+        
+        Schema::create('groups', function (Blueprint $table) {
+            $table->id('group_id');
+            $table->string('name', 100);
+            $table->text('description')->nullable();
+            $table->string('room_code', 50)->unique(); // Unique code for joining
+            $table->boolean('is_default')->default(false); // Mark default channels
+            $table->foreignId('created_by')->nullable()->constrained('users', 'user_id')->onDelete('set null'); // Creator
+            $table->timestamps();
+        });
+
+        Schema::create('group_messages', function (Blueprint $table) {
+            $table->id('message_id');
+            $table->foreignId('group_id')->constrained('groups', 'group_id')->onDelete('cascade');
+            $table->foreignId('sender_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->text('message_body');
+            $table->boolean('is_blurred')->default(false);
+            $table->timestamp('sent_at')->useCurrent();
+        });
+
+        Schema::create('events', function (Blueprint $table) {
+            $table->id('event_id');
+            $table->string('title');
+            $table->string('category')->nullable(); // Added category
+            $table->string('host_name');
+            $table->text('description')->nullable();
+            $table->timestamp('start_time');
+            $table->timestamp('end_time')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('chapters', function (Blueprint $table) {
+            $table->id('chapter_id');
+            $table->foreignId('book_id')->constrained('books', 'book_id')->onDelete('cascade');
+            $table->string('title');
+            $table->longText('content'); // The actual text of the chapter
+            $table->integer('order_index'); // To know which is Chapter 1, 2, etc.
+            $table->timestamps();
+        });
+
+        Schema::create('annotations', function (Blueprint $table) {
+            $table->id('annotation_id');
+            $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->foreignId('book_id')->constrained('books', 'book_id')->onDelete('cascade');
+            $table->foreignId('chapter_id')->constrained('chapters', 'chapter_id')->onDelete('cascade');
+            $table->text('highlighted_text')->nullable(); // Text the user selected
+            $table->text('note'); // The user's comment
+            $table->string('color', 20)->default('yellow');
+            $table->timestamps();
+        });
+        Schema::create('follows', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('follower_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->foreignId('following_id')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->timestamps();
+
+            // Prevent duplicate follows
+            $table->unique(['follower_id', 'following_id']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('verso_tables');
+    }
+};
