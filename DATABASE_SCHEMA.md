@@ -117,9 +117,13 @@ User highlights and notes on specific book chapters.
 Community groups for users.
 
 - **Primary Key:** `group_id`
+- **Foreign Keys:**
+  - `created_by` -> `users(user_id)` (Set Null)
 - **Columns:**
   - `name` (string, 100).
   - `description` (text, nullable).
+  - `room_code` (string, 50, unique): Unique code for joining groups.
+  - `is_default` (boolean, default: false): Mark default channels.
   - `created_at`, `updated_at` (timestamps)
 
 ### 10. `group_messages`
@@ -132,6 +136,7 @@ Messages sent within groups.
   - `sender_id` -> `users(user_id)` (Cascade Delete)
 - **Columns:**
   - `message_body` (text).
+  - `is_blurred` (boolean, default: false): Whether message content is blurred.
   - `sent_at` (timestamp, useCurrent).
 
 ### 11. `events`
@@ -166,6 +171,8 @@ User-to-Author following relationship.
 - **Foreign Keys:**
   - `user_id` -> `users(user_id)` (Cascade Delete)
   - `author_id` -> `authors(author_id)` (Cascade Delete)
+- **Columns:**
+  - `created_at`, `updated_at` (timestamps)
 - **Constraints:** Unique combination of `user_id` and `author_id`.
 
 ### 14. `book_author`
@@ -176,10 +183,78 @@ Pivot table for Books and Authors (Many-to-Many).
 - **Foreign Keys:**
   - `book_id` -> `books(book_id)` (Cascade Delete)
   - `author_id` -> `authors(author_id)` (Cascade Delete)
+- **Columns:**
+  - `created_at`, `updated_at` (timestamps)
+
+### 15. `book_ratings`
+
+Stores user ratings for books.
+
+- **Primary Key:** `rating_id`
+- **Foreign Keys:**
+  - `book_id` -> `books(book_id)` (Cascade Delete)
+  - `user_id` -> `users(user_id)` (Cascade Delete)
+- **Columns:**
+  - `rating` (integer, unsigned): Rating value (1-5 stars).
+  - `created_at`, `updated_at` (timestamps)
+- **Constraints:** Unique combination of `book_id` and `user_id` (one rating per user per book).
+
+### 16. `book_comments`
+
+Stores user comments on books.
+
+- **Primary Key:** `comment_id`
+- **Foreign Keys:**
+  - `book_id` -> `books(book_id)` (Cascade Delete)
+  - `user_id` -> `users(user_id)` (Cascade Delete)
+- **Columns:**
+  - `comment` (text): User's comment on the book.
+  - `created_at`, `updated_at` (timestamps)
+
+### 17. `notifications`
+
+Stores user notifications.
+
+- **Primary Key:** `id`
+- **Foreign Keys:**
+  - `user_id` -> `users(user_id)` (Cascade Delete)
+- **Columns:**
+  - `type` (string): Notification type (e.g., 'read_reminder', 'explore_books', 'connect_people').
+  - `title` (string): Notification title.
+  - `message` (text): Notification message content.
+  - `is_read` (boolean, default: false): Whether notification has been read.
+  - `created_at`, `updated_at` (timestamps)
 
 ### System/Utility Tables
 
 - **`personal_access_tokens`**: For Sanctum authentication (Polymorphic).
+  - **Primary Key:** `id`
+  - **Columns:**
+    - `tokenable_type`, `tokenable_id` (polymorphic relation)
+    - `name` (text): Token name
+    - `token` (string, 64, unique): Hashed token
+    - `abilities` (text, nullable): Token permissions
+    - `last_used_at` (timestamp, nullable)
+    - `expires_at` (timestamp, nullable, indexed)
+    - `created_at`, `updated_at` (timestamps)
+
 - **`sessions`**: Web session storage.
+  - **Primary Key:** `id` (string)
+  - **Columns:**
+    - `user_id` (foreignId, nullable, indexed)
+    - `ip_address` (string, 45, nullable)
+    - `user_agent` (text, nullable)
+    - `payload` (longText): Session data
+    - `last_activity` (integer, indexed)
+
 - **`cache`**: Key-value cache storage.
+  - **Primary Key:** `key` (string)
+  - **Columns:**
+    - `value` (mediumText)
+    - `expiration` (integer, indexed)
+
 - **`cache_locks`**: Atomic lock storage.
+  - **Primary Key:** `key` (string)
+  - **Columns:**
+    - `owner` (string)
+    - `expiration` (integer, indexed)
