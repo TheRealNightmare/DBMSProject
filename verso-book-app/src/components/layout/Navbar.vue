@@ -163,13 +163,22 @@
             <p class="text-[10px] text-gray-500 font-medium">View Profile</p>
           </div>
         </router-link>
+
+        <button
+          @click="handleLogout"
+          class="flex items-center gap-2 px-4 py-2 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600 transition-colors shadow-sm active:scale-95"
+          title="Logout"
+        >
+          <LogOut class="h-4 w-4" />
+          <span class="hidden md:inline text-sm">Logout</span>
+        </button>
       </div>
     </div>
   </nav>
 </template>
 
 <script setup>
-import { Search } from "lucide-vue-next";
+import { Search, LogOut } from "lucide-vue-next";
 import { ref, onMounted } from "vue";
 import api from "@/services/api";
 import { useRouter } from "vue-router";
@@ -203,12 +212,14 @@ const executeSearch = async () => {
   showResults.value = false;
 
   try {
-    const response = await api.get(`/search?query=${searchQuery.value}`);
+    const response = await api.get(`/search?query=${encodeURIComponent(searchQuery.value)}`);
+    console.log('Search response:', response.data);
     searchResults.value = response.data.users || [];
     bookResults.value = response.data.books || [];
     showResults.value = true;
   } catch (error) {
-    console.error("Search failed", error);
+    console.error("Search failed:", error.response?.data || error.message);
+    alert('Search failed. Please check console for details.');
   } finally {
     isLoading.value = false;
   }
@@ -229,6 +240,21 @@ const goToProfile = (userId) => {
 const goToBook = (bookId) => {
   clearSearch();
   router.push(`/books/${bookId}`);
+};
+
+const handleLogout = async () => {
+  try {
+    // Call logout endpoint
+    await api.post("/logout");
+  } catch (error) {
+    console.error("Logout request failed:", error);
+  } finally {
+    // Clear local storage regardless of API response
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user");
+    // Redirect to login
+    router.push("/login");
+  }
 };
 
 // --- Lifecycle ---

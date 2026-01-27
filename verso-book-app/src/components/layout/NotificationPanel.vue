@@ -151,9 +151,11 @@ const fetchNotifications = async () => {
   loading.value = true;
   try {
     const response = await api.get('/notifications');
-    notifications.value = response.data.notifications;
+    console.log('Notifications response:', response.data);
+    notifications.value = response.data.notifications || [];
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    console.error('Error fetching notifications:', error.response?.data || error.message);
+    // Don't show error to user for notifications
   } finally {
     loading.value = false;
   }
@@ -167,7 +169,7 @@ const markAsRead = async (id) => {
     await api.post(`/notifications/${id}/read`);
     notification.is_read = true;
   } catch (error) {
-    console.error('Error marking notification as read:', error);
+    console.error('Error marking notification as read:', error.response?.data || error.message);
   }
 };
 
@@ -176,7 +178,7 @@ const markAllRead = async () => {
     await api.post('/notifications/read-all');
     notifications.value.forEach(n => n.is_read = true);
   } catch (error) {
-    console.error('Error marking all as read:', error);
+    console.error('Error marking all as read:', error.response?.data || error.message);
   }
 };
 
@@ -184,8 +186,10 @@ const sendTestNotification = async () => {
   try {
     await api.post('/notifications/send');
     await fetchNotifications();
+    alert('Test notifications sent to all users!');
   } catch (error) {
-    console.error('Error sending test notification:', error);
+    console.error('Error sending test notification:', error.response?.data || error.message);
+    alert('Failed to send test notification. Check console.');
   }
 };
 

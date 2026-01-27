@@ -23,24 +23,6 @@
               </p>
             </div>
 
-            <div class="flex items-center gap-4">
-              <div class="relative group">
-                <Search
-                  class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-verso-blue transition"
-                />
-                <input
-                  type="text"
-                  placeholder="Search books..."
-                  class="bg-white pl-12 pr-4 py-3 text-sm text-verso-dark rounded-xl border-2 border-gray-200 focus:outline-none focus:border-verso-blue placeholder-gray-400 w-full md:w-64 transition-all shadow-sm hover:shadow-md"
-                />
-              </div>
-              <button class="relative p-3 bg-white rounded-xl border-2 border-gray-200 hover:border-verso-blue hover:bg-blue-50 transition-all group shadow-sm hover:shadow-md">
-                <Bell class="w-5 h-5 text-gray-600 group-hover:text-verso-blue transition" />
-                <div
-                  class="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"
-                ></div>
-              </button>
-            </div>
           </div>
         </header>
 

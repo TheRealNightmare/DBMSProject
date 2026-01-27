@@ -362,3 +362,110 @@ INSERT INTO `user_follows` (`follower_id`, `following_id`) VALUES (?, ?);
 DELETE FROM `user_follows` WHERE `follower_id` = ? AND `following_id` = ?;
 
 ```
+
+---
+
+## 9. NotificationController
+
+### `index(Request $request)`
+
+```sql
+SELECT * FROM `notifications`
+WHERE `user_id` = ?
+ORDER BY `created_at` DESC
+LIMIT 50;
+
+```
+
+```sql
+SELECT count(*) as aggregate FROM `notifications`
+WHERE `user_id` = ? AND `is_read` = 0;
+
+```
+
+### `markAsRead($id)`
+
+```sql
+SELECT * FROM `notifications`
+WHERE `id` = ? AND `user_id` = ?
+LIMIT 1;
+
+```
+
+```sql
+UPDATE `notifications`
+SET `is_read` = ?, `updated_at` = ?
+WHERE `id` = ?;
+
+```
+
+### `markAllAsRead()`
+
+```sql
+UPDATE `notifications`
+SET `is_read` = ?, `updated_at` = ?
+WHERE `user_id` = ? AND `is_read` = 0;
+
+```
+
+### `sendScheduledNotifications()`
+
+```sql
+SELECT * FROM `users`;
+
+```
+
+```sql
+INSERT INTO `notifications` (`user_id`, `type`, `title`, `message`, `created_at`, `updated_at`)
+VALUES (?, ?, ?, ?, ?, ?);
+
+```
+
+---
+
+## 10. SearchController
+
+### `search(Request $request)`
+
+```sql
+SELECT * FROM `users`
+WHERE `username` LIKE ?
+AND `user_id` != ?
+LIMIT 5;
+
+```
+
+```sql
+SELECT count(*) FROM `user_follows` WHERE `following_id` = users.user_id;
+SELECT count(*) FROM `user_follows` WHERE `follower_id` = users.user_id;
+
+```
+
+```sql
+SELECT EXISTS(
+    SELECT * FROM `user_follows`
+    WHERE `follower_id` = ? AND `following_id` = ?
+);
+
+```
+
+```sql
+SELECT * FROM `books`
+WHERE `title` LIKE ?
+OR EXISTS (
+    SELECT * FROM `authors`
+    INNER JOIN `book_authors` ON `authors`.`author_id` = `book_authors`.`author_id`
+    WHERE `books`.`book_id` = `book_authors`.`book_id`
+    AND `name` LIKE ?
+)
+LIMIT 5;
+
+```
+
+```sql
+SELECT `authors`.*, `book_authors`.`book_id` as `pivot_book_id`, `book_authors`.`author_id` as `pivot_author_id`
+FROM `authors`
+INNER JOIN `book_authors` ON `authors`.`author_id` = `book_authors`.`author_id`
+WHERE `book_authors`.`book_id` IN (?, ?, ...);
+
+```
